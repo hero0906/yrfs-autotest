@@ -1,0 +1,10 @@
+   -
+    path: autotest_qos
+    iops: 100
+    bps: 1M
+    mops: 1000
+    invalid_param: -100
+    succ_result: "Set qos for " 
+    err_result: "Invalid configuration"
+    remove_result: "Success"
+

@@ -1,0 +1,6 @@
+  -
+    path: auotest_acl
+    mode: rw
+    ip: 192.168.48.17
+    id: auotest12345678
+    succ_result: "ok"

@@ -1,0 +1,239 @@
+syntax = "proto3";
+
+
+//grpc client: get client stats
+message ClientStatsPara {
+  //node_type = 1, request opcounter for mds
+  //node_type = 2, request opcounter for oss
+  uint32 node_type = 1;
+
+  //true: hide server ip
+  bool hide_internal_ips = 2;
+
+  //true: return all client even if opcounter is zero
+  bool return_zero_stats = 3;
+
+  //client_stats_type = 0, sum of external clients
+  //client_stats_type = 1, sum of internal and external clients
+  //client_stats_type = 2, sum of internal clients
+  uint32 client_stats_type = 4;
+}
+
+/*
+mds opcounter:
+  uint64 sum;
+  uint64 ack;
+  uint64 close;
+  uint64 ent_inf;
+  uint64 node_inf;
+  uint64 fnd_own;
+  uint64 lnk;
+  uint64 mkdir;
+  uint64 create;
+  uint64 rddir;
+  uint64 refr_ent;
+  uint64 mds_inf;
+  uint64 rmdir;
+  uint64 rmlnk;
+  uint64 mv_dir_ins;
+  uint64 mv_file_ins;
+  uint64 open;
+  uint64 ren;
+  uint64 s_ch_drct;
+  uint64 s_attr;
+  uint64 s_dir_pat;
+  uint64 stat;
+  uint64 statfs;
+  uint64 trunc;
+  uint64 symlnk;
+  uint64 unlnk;
+  uint64 look_li;
+  uint64 stat_li;
+  uint64 reval_li;
+  uint64 open_li;
+  uint64 create_li;
+  uint64 mirror_md;
+  uint64 hardlnk;
+  uint64 flck_ap;
+  uint64 flck_en;
+  uint64 flck_rg;
+  uint64 dirparent;
+  uint64 list_xa;
+  uint64 get_xa;
+  uint64 rm_xa;
+  uint64 set_xa
+
+oss opcounter:
+  uint64 sum;
+  uint64 ack;
+  uint64 s_ch_drct;
+  uint64 get_file_size;
+  uint64 s_attr;
+  uint64 statfs;
+  uint64 trunc;
+  uint64 close;
+  uint64 fsync;
+  uint64 open;
+  uint64 iops_rd;
+  uint64 bps_rd;
+  uint64 iops_wr;
+  uint64 bps_wr;
+  uint64 gendbg;
+  uint64 hrtbeat;
+  uint64 rem_node;
+  uint64 node_inf;
+  uint64 stor_info;
+  uint64 unlnk;
+*/
+
+//grpc server: return client stats
+message ClientStatsRet {
+  //attention:
+  //the first message is total size, the ip is fix string "total", the online is true
+  //the client message start with the second message
+
+  //client ip
+  string ip = 1;
+
+  //true: client ip is online
+  bool online = 2;
+
+  //mds or oss opcounter
+  repeated uint64 opcounters = 3;
+}
+
+//grpc client: get sla info
+message GetSlaInfoPara {
+  //true: contains sla info of root
+  bool with_root = 1;
+}
+
+/*
+sla_value:
+  uint64 total_rb;
+  uint64 total_wb;
+  uint64 total_rs;
+  uint64 total_ws;
+  uint64 rbps;
+  uint64 wbps;
+  uint64 riops;
+  uint64 wiops;
+*/
+//grpc server: return sla info
+message GetSlaInfoRet {
+  //the path
+  string path = 1;
+
+  //entryID of path
+  string entry_id = 2;
+
+  //sla value
+  repeated uint64 sla_value = 3;
+}
+
+//value with timestamp key
+//this message is used for MdsOverviewRet/OssOverviewRet
+message TimeValue {
+  uint64 time = 1;
+  uint64 value = 2;
+}
+
+//server node information
+message ServerNode {
+  //node name
+  string node_name = 1;
+
+  //node num id
+  uint32 node_num_id = 2;
+
+  //node is noline
+  //true: server node is online
+  bool online = 3;
+}
+
+//grpc client: get mds overview
+message MdsOverviewPara {
+  bool unused = 1;
+}
+
+//grpc server: return mds overview
+message MdsOverviewRet {
+  uint64 disk_space_total = 1;
+  uint64 disk_space_free = 2;
+  uint64 disk_space_used = 3;
+  uint64 inode_space_used = 4;
+  repeated ServerNode node_info = 5;
+  repeated TimeValue work_requests = 6;
+  repeated TimeValue queued_requests = 7;
+}
+
+//grpc client: get oss overview
+message OssOverviewPara {
+  bool unused = 1;
+}
+
+//grpc server: return oss overview
+message OssOverviewRet {
+  uint64 disk_space_total = 1;
+  uint64 disk_space_free = 2;
+  uint64 disk_space_used = 3;
+  uint64 disk_read_sum = 4;
+  uint64 disk_write_sum = 5;
+  repeated ServerNode node_info = 6;
+  repeated TimeValue disk_perf_read = 7;
+  repeated TimeValue disk_perf_average_read = 8;
+  repeated TimeValue disk_perf_write = 9;
+  repeated TimeValue disk_per_average_write = 10;
+}
+
+//grpc client: get node list
+message NodeListPara {
+  //true: return client node information
+  bool client = 1;
+
+  //This value is meaningful only if client is set to true
+  //true: hide server ip
+  bool hide_internal_ips = 2;
+
+  //true: return agent information
+  bool agent = 3;
+}
+
+//node information
+message NodeInfo {
+  //type = 1: mds
+  //type = 2: oss
+  //type = 3: client
+  //type = 4: mgmt
+  //type = 5: agent
+  uint32 type = 1;
+
+  //node num id
+  uint32 node_num_id = 2;
+
+  //node num name
+  string node_name = 3;
+}
+
+//grpc server: return node list
+message NodeListRet {
+  //the list of node info
+  repeated NodeInfo node_lists = 1;
+}
+
+service Agent {
+  //get client opcounter
+  rpc ClientStats(ClientStatsPara) returns (stream ClientStatsRet) {}
+
+  //get sla info
+  rpc GetSlaInfo(GetSlaInfoPara) returns (stream GetSlaInfoRet) {}
+
+  //get mds overview
+  rpc MdsOverview(MdsOverviewPara) returns (MdsOverviewRet) {}
+
+  //get oss overview
+  rpc OssOverview(OssOverviewPara) returns (OssOverviewRet) {}
+
+  //get node list
+  rpc NodeList(NodeListPara) returns (stream NodeListRet) {}
+}

@@ -1,0 +1,10 @@
+   -
+    path: autotest_quota
+    space: 1024M
+    inode: 10
+    new_space: 8000M
+    new_inode: 800
+    succ_result: Success #执行成功结果
+    limit_error_result: exceeded #超过上限报错
+    fail_result: Failed #执行执行报错
+    set_fail: "Couldn't set project quota"

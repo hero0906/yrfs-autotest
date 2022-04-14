@@ -1,0 +1,7 @@
+   -
+    success: Success #执行成功结果
+    limiterror: "Disk quota exceeded" #超过上限报错
+    failed: Failed #执行执行报错
+    setfail: "Couldn't set project quota"
+    sixteendepths: "dir_layer <= 16"
+    notpermit: "Operation not permitted"
