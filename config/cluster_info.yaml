@@ -1,0 +1,31 @@
+clientip:
+- 19.16.100.109
+- 19.16.100.110
+node1-stor:
+- !!python/tuple
+  - ens192
+  - 19.16.100.2
+- !!python/tuple
+  - ens224
+  - 192.168.12.161
+node2-stor:
+- !!python/tuple
+  - ens192
+  - 19.16.100.3
+- !!python/tuple
+  - ens224
+  - 192.168.12.162
+node3-stor:
+- !!python/tuple
+  - ens192
+  - 19.16.100.4
+- !!python/tuple
+  - ens224
+  - 192.168.12.163
+node4-stor:
+- !!python/tuple
+  - ens192
+  - 19.16.100.5
+- !!python/tuple
+  - ens224
+  - 192.168.12.164
