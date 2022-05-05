@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
-
+# coding=utf-8
 """
-@Desciption : s3 tiering seek mirror test suite
+@Desciption : s3 tiering seek test suite
 @Time : 2021/10/28 15:22
 @Author : caoyi
 """
@@ -25,9 +23,10 @@ from common.cluster import get_osd_master, get_entry_info, check_cluster_health
 logger = logging.getLogger(__name__)
 yrfs_version = int(consts.YRFS_VERSION[:2])
 
+
 @pytest.mark.skipif(yrfs_version <= 66, reason="only 66* verison need run.")
 @pytest.mark.funcTest
-class TestmirrorSeek(YrfsCli):
+class TestS3Seek(YrfsCli):
 
     def setup_class(self):
         self.client1 = consts.CLIENT[0]
@@ -61,24 +60,13 @@ class TestmirrorSeek(YrfsCli):
         add_stat, _ = self.sshserver.ssh_exec(bucket_add)
         if add_stat != 0:
             pytest.skip(msg="add bucket failed, test skip", allow_module_level=True)
-        # 添加mirror bucket
-        mirror_add = self.get_cli(self, "bucket_add", consts.s3["hostname"], consts.s3["protocol"],
-                                  consts.s3["bucketmirror"],
-                                  consts.s3["uri_style"], consts.s3["region"], consts.s3["access_key"],
-                                  consts.s3["secret_access_key"],
-                                  consts.s3["token"], consts.s3["type"], consts.s3["mirrorid"])
-        self.sshserver.ssh_exec(self.get_cli(self, "bucket_del", consts.s3["mirrorid"]))
-        add_stat, _ = self.sshserver.ssh_exec(mirror_add)
-        if add_stat != 0:
-            pytest.skip(msg="add bucket failed, test skip", allow_module_level=True)
         # 创建测试目录
         self.sshserver.ssh_exec("mkdir -p " + self.testpath)
         # 添加分层
         sleep(1)
         # 执行一次删除
         self.sshserver.ssh_exec(self.get_cli(self, 'tiering_del', "998"))
-        add_tier = self.get_cli(self, "mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "1",
-                                "00:00", "998")
+        add_tier = self.get_cli(self, "tiering_add", self.testdir, consts.s3["bucketid"], "1", "00:00", "998")
         add_stat, _ = self.sshserver.ssh_exec(add_tier)
         assert add_stat == 0, "add tiering failed."
         sleep(1)
@@ -93,8 +81,9 @@ class TestmirrorSeek(YrfsCli):
         self.sshserver.ssh_exec("rm -fr " + self.testpath)
         self.sshserver.ssh_exec(self.get_cli(self, 'tiering_del', "998"))
         # 删除bucket配置
-        self.sshserver.ssh_exec(self.get_cli(self, "bucket_del", consts.s3["bucketid"]))
-        self.sshserver.ssh_exec(self.get_cli(self, "bucket_del", consts.s3["mirrorid"]))
+        bucket_del = self.get_cli(self, "bucket_del", consts.s3["bucketid"])
+        del_stat, _ = self.sshserver.ssh_exec(bucket_del)
+        assert del_stat == 0, "delete bucket failed."
 
         self.sshclient1.close_connect()
         self.sshserver.close_connect()
@@ -122,7 +111,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_multi_read(self, cache, lazy):
         """
-        caseID:3692 检验上传读取文件成功,多线程读成功，20M大文件和10K小文件(cache、none,lazy open、close)（s3 mirror）
+        caseID:3692 检验上传读取文件成功,多线程读成功，20M大文件和10K小文件(cache、none,lazy open、close)
         """
         subpath1 = self.testpath + "/dir1"
         subpath2 = self.testpath + "/dir2"
@@ -207,7 +196,7 @@ class TestmirrorSeek(YrfsCli):
                  "    res = res + t.result()\n" \
                  "print(res)"
 
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
         /tmp/autotest_tiering_mul_read.py" % script)
 
         assert res == "0", "multi thread read failed."
@@ -268,7 +257,7 @@ class TestmirrorSeek(YrfsCli):
                  "    res = res + t.result()\n" \
                  "print(res)"
 
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
         /tmp/autotest_tiering_mul_read.py" % script)
 
         assert res == "0", "multi thread read failed."
@@ -277,7 +266,8 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_append_write(self, cache, lazy):
         """
-        检验s3seek模式追加写文件正确,3703 校验写S3层的文件1G，写入成功，并上传S3有效(cache、none,lazy open、close)（s3 mirror）
+        检验s3seek模式追加写文件正确
+        3703 校验写S3层的文件1G，写入成功，并上传S3有效(cache、none,lazy open、close)
         """
         # 创建测试文件
         mountdir = consts.MOUNT_DIR
@@ -317,7 +307,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seq_read(self, cache, lazy):
         """
-        3696 （自动化）校验预埋同一目录并全部上传，顺序读部分文件成功,(cache、none,lazy open、close)（s3 mirror）
+        3696 （自动化）校验预埋同一目录并全部上传，顺序读部分文件成功,(cache、none,lazy open、close)
         """
         testpath = self.testpath + "/autotest_seek_file"
         testfile = self.testdir + "/autotest_seek_file"
@@ -336,7 +326,7 @@ class TestmirrorSeek(YrfsCli):
         check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
         # seek创建脚本文件读取文件下载测试切片
         script = create_s3_script(fname=testpath, bytesize=104960111)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
         /tmp/autotest_tiering_mul_read.py" % script)
         # 校验顺序读
         assert res == "0", "seq read s3 failed"
@@ -345,7 +335,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_random_read(self, cache, lazy):
         """
-        3701 （自动化）校验预埋不同目录部分上传至S3，部分本地，随机读全部文件成功(cache、none,lazy open、close)（s3 mirror）
+        3701 （自动化）校验预埋不同目录部分上传至S3，部分本地，随机读全部文件成功(cache、none,lazy open、close)
         """
         testpath = self.testpath + "/autotest_seek_file"
         testfile = self.testdir + "/autotest_seek_file"
@@ -364,7 +354,7 @@ class TestmirrorSeek(YrfsCli):
         check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
         # seek创建脚本文件读取文件下载测试切片
         script = create_s3_script(fname=testpath, bytesize=1049, blocks=5)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
         /tmp/autotest_tiering_mul_read.py" % script)
 
         assert res == "0", "seq read s3 failed"
@@ -373,7 +363,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_cache_copy(self, cache, lazy):
         """
-        3760 校验预读模式下拷贝原数据到集群别的seek目录后对比源文件和目标文件的md5值(cache、none,lazy open、close)（s3 mirror）
+        3760 校验预读模式下拷贝原数据到集群别的seek目录后对比源文件和目标文件的md5值(cache、none,lazy open、close)
         """
 
         testpath = self.testpath + "/autotest_seek_file"
@@ -412,7 +402,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seek_change_normal(self, cache, lazy):
         """
-        3734 开启seek模式的目录修改S3模式为normal，验证新旧文件的表现(cache、none,lazy open、close)（s3 mirror）
+        3734 开启seek模式的目录修改S3模式为normal，验证新旧文件的表现(cache、none,lazy open、close)
         """
         testpath = self.testpath + "/autotest_seek_file"
         testfile = self.testdir + "/autotest_seek_file"
@@ -476,7 +466,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seek_md5sum(self, cache, lazy):
         """
-        3784 seek写已经在S3上的文件，md5校验1(cache、none,lazy open、close)（s3 mirror）
+        3784 seek写已经在S3上的文件，md5校验1(cache、none,lazy open、close)
         """
         filename = "autotest_seek_file"
         testpath = self.testpath + "/" + filename
@@ -519,7 +509,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seq_rand_read(self, cache, lazy):
         """
-        3715 校验顺序读后在随机读，是否有残留(cache、none,lazy open、close)（s3 mirror）
+        3715 校验顺序读后在随机读，是否有残留(cache、none,lazy open、close)
         """
         testpath = self.testpath + "/autotest_seek_file"
         testfile = self.testdir + "/autotest_seek_file"
@@ -547,12 +537,12 @@ class TestmirrorSeek(YrfsCli):
         assert int(df_old) > int(df_upload), "Capacity not reduced"
         # 顺序读
         script = create_s3_script(fname=testpath, bytesize=104960111)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
         /tmp/autotest_tiering_mul_read.py" % script)
         assert res == "0", "seq seek read failed"
         # 随机读
         script = create_s3_script(fname=testpath, bytesize=1049, blocks=5)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
         /tmp/autotest_tiering_mul_read.py" % script)
         assert res == "0", "rand seek read failed"
         # 再次上传到s3
@@ -571,7 +561,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_read_less_blocksize(self, cache, lazy):
         """
-        3711 校验顺序读小于blocksize(设置等于stripesize)边界正常(cache、none,lazy open、close)（s3 mirror）
+        3711 校验顺序读小于blocksize(设置等于stripesize)边界正常(cache、none,lazy open、close)
         """
         sshmaster = ""
         testpath = self.testpath + "/autotest_seek_file"
@@ -595,7 +585,7 @@ class TestmirrorSeek(YrfsCli):
             check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
             # 顺序读90M
             script = create_s3_script(fname=testpath, bytesize=read_size * 1024 * 1024)
-            _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python \
+            _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
             /tmp/autotest_tiering_mul_read.py" % script)
             assert res == "0", "seq seek read failed"
             # 获取文件的osd master节点
@@ -610,9 +600,9 @@ class TestmirrorSeek(YrfsCli):
             file_path = file_path.split()[0]
             # 计算稀疏文件的大小
             _, file_size = sshmaster.ssh_exec("du -sm " + file_path)
-            file_size = file_size.split()[0]
+            # file_size = file_size.split()[0]
             # 计算稀疏文件的size大于，读取的块大小文件
-            #assert int(read_size) < int(file_size)
+            # assert int(read_size) < int(file_size)
             # 再次时间flush操作
             sleep(5)
             flush_stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_flush", "998"))
@@ -631,7 +621,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_uploading_rw(self, cache, lazy):
         """
-        3693 校验同一目录既上传过程中，顺序读写S3中部分文件有效(cache、none,lazy open、close)（s3 mirror）
+        3693 校验同一目录既上传过程中，顺序读写S3中部分文件有效(cache、none,lazy open、close)
         """
         fio_cmd = "fio -iodepth=16 -numjobs={} -bs=4K -ioengine=psync -group_report -name={} -size={} " + \
                   "-directory={} -nrfiles={} -rw={}"
@@ -664,7 +654,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seq_rand_rw(self, cache, lazy):
         """
-        3694 校验不同目录上传完成后，顺序+随机+读写部分文件有效(cache、none,lazy open、close)（s3 mirror）
+        3694 校验不同目录上传完成后，顺序+随机+读写部分文件有效(cache、none,lazy open、close)
         """
         fio_cmd = "cd " + self.mountdir + "&&fio -iodepth=16 -numjobs={} -bs=4K -ioengine=psync -group_report -name={" \
                                           "} -filesize={} " + \
@@ -721,9 +711,40 @@ class TestmirrorSeek(YrfsCli):
             res = t.result()
             assert res[0] == 0, "Read S3 file  failed."
 
+    def test_add_none_dir(self):
+        """
+        3284 校验非空目录创建分层，该目录下的历史数据（建立分层前的文件）mv至别的目录，cp回该目录后历史数据上传有效
+        """
+        tiering_id = "9999"
+        testdir = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
+        testfile = testdir + "/autotest_seek_file1"
+        try:
+            # 创建目录
+            self.sshserver.ssh_exec("cd %s&&mkdir %s" % (self.mountdir, testdir))
+            # 写入数据
+            self.sshserver.ssh_exec(
+                "cd %s&&dd if=/dev/zero of=%s bs=1M count=200 oflag=direct" % (self.mountdir, testfile))
+            # 添加分层
+            add_tier = self.get_cli("tiering_add", testdir, consts.s3["bucketid"], "1", "00:00",
+                                    tiering_id) + " --mode=1"
+            self.sshserver.ssh_exec(add_tier)
+            # 数据mv到其他目录
+            self.sshserver.ssh_exec("cd %s&&mv %s %s" % (self.mountdir, testfile, self.testdir))
+            # 重新拷贝数据到测试目录
+            self.sshserver.ssh_exec("cd %s&&cp %s/* %s/" % (self.mountdir, self.testdir, testdir))
+            # 执行数据上传操作
+            sleep(5)
+            self.sshserver.ssh_exec(self.get_cli("tiering_flush", tiering_id))
+            sleep(30)
+            # 检查文件是否上传成功
+            check_layer(fname=testfile, layer="S3", tierid=tiering_id, mode="s3seek")
+        finally:
+            self.sshserver.ssh_exec("cd %s&&rm -fr %s %s/*" % (self.mountdir, testdir, self.testdir))
+            self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
+
     def test_downloading_rebuild(self):
         """
-        2519 校验在下载过程中触发全量恢复，IO及下载有效（s3 mirror）
+        2519 校验在下载过程中触发全量恢复，IO及下载有效
         """
         testdir = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         filename = self.testdir + "/file1"
@@ -769,7 +790,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seek_3780(self, cache, lazy):
         """
-        3780 fio读取offset为0,io_limit为5G的seek文件的数据一致性（s3 mirror）
+        3780 fio读取offset为0,io_limit为5G的seek文件的数据一致性
         """
         testfile = self.testpath + "/fio_file.txt"
         param = self.__make_param(cache, lazy)
@@ -795,7 +816,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3785(self):
         """
-        3785 seek写已经在S3上的文件，md5校验2（s3 mirror）
+        3785 seek写已经在S3上的文件，md5校验2
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -834,7 +855,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3786(self):
         """
-        3786 seek重复写S3上文件的同一部分（s3 mirror）
+        3786 seek重复写S3上文件的同一部分
         """
         # 客户端挂载
         mount = client_mount(self.client1, acl_add=True)
@@ -858,7 +879,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3787(self):
         """
-        3787 seek多次写S3上文件的不同位置（s3 mirror）
+        3787 seek多次写S3上文件的不同位置
         """
         # 客户端挂载
         mount = client_mount(self.client1, acl_add=True)
@@ -895,7 +916,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3788(self):
         """
-        3788 seek多次写S3上文件的交叉位置（s3 mirror）
+        3788 seek多次写S3上文件的交叉位置
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -947,7 +968,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3789(self):
         """
-        3789 多线程并发seek写同一文件的不同部分（flush前校验）（s3 mirror）
+        3789 多线程并发seek写同一文件的不同部分（flush前校验）
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -1002,7 +1023,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3790(self):
         """
-        3790 多线程并发seek写不同文件（s3 mirror）
+        3790 多线程并发seek写不同文件
         """
         filenum = 1000
         fnames = []
@@ -1022,13 +1043,13 @@ class TestmirrorSeek(YrfsCli):
             fnames.append(fname)
         # 并发seek读取文件
         script = create_s3_script(fnames[:20], 20, mode="write")
-        stat, _ = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %s&&python \
+        stat, _ = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %spython3 \
         /tmp/autotest_tiering_mul_read.py" % (script, self.mountdir))
         assert stat == 0, "multi seek write failed."
 
     def test_seek_3793(self):
         """
-        3793 truncate 小于S3上的文件（flush后校验）（s3 mirror）
+        3793 truncate 小于S3上的文件（flush后校验）
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -1066,7 +1087,8 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("write_param", ("doing", "done"))
     def test_seek_3919(self, write_param):
         """
-        3919 大文件上传到S3后，追加写（s3 mirror）,3920 大文件上传到S3的过程中，追加写
+        3919 大文件上传到S3后，追加写 param:done
+        3920 大文件上传到S3的过程中，追加写 param:doing
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -1100,7 +1122,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3922(self):
         """
-        3922 100线程并发seek顺序读S3上的大文件（s3 mirror）
+        3922 100线程并发seek顺序读S3上的大文件
         """
         # 客户端挂载
         mount = client_mount(self.client1, acl_add=True)
@@ -1117,14 +1139,14 @@ class TestmirrorSeek(YrfsCli):
             fname = self.testdir + "/autotest.0." + str(i)
             fnames.append(fname)
         script = create_s3_script(fnames, workers=100, bytesize="5242880")
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %s&&python \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %spython3 \
         /tmp/autotest_tiering_mul_read.py" % (script, self.mountdir))
         assert res == "0", "multi seek read failed."
 
     @pytest.mark.skipif(len(consts.CLIENT) < 2, reason="need two client")
     def test_seek_4058(self):
         """
-        4058 两个客户端同时执行rsync将S3数据下载到本地（s3 mirror）
+        4058 两个客户端同时执行rsync将S3数据下载到本地
         """
         testpath1 = os.path.join(self.mountdir, "autotest_seek_4058001")
         testpath2 = os.path.join(self.mountdir, "autotest_seek_4058002")
@@ -1159,7 +1181,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_4093(self):
         """
-        4093 对S3上文件进行一写多读，保证文件最终数据正确性（先md5sum）（s3 mirror）
+        4093 对S3上文件进行一写多读，保证文件最终数据正确性（先md5sum）
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -1207,7 +1229,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3792(self):
         """
-        3792 truncate 0 S3上的文件（s3 mirror）
+        3792 truncate 0 S3上的文件
         """
         s3object = S3Object()
         # 客户端挂载
@@ -1241,7 +1263,7 @@ class TestmirrorSeek(YrfsCli):
 
     def test_seek_3794(self):
         """
-        3794 truncate 大于S3上的文件（flush后校验)（s3 mirror）
+        3794 truncate 大于S3上的文件（flush后校验)
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -1278,7 +1300,7 @@ class TestmirrorSeek(YrfsCli):
     @pytest.mark.parametrize("trunc_size", ("0", "50", "100"))
     def test_seek_3795(self, trunc_size, mode):
         """
-        3795-7 在seek读或者写操作后，分别truncate 清空、大于、小于 S3上的文件（s3 mirror）。
+        3795-7 在seek读或者写操作后，分别truncate 清空、大于、小于 S3上的文件。
         """
         testdir2 = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         testpath2 = os.path.join(self.mountdir, testdir2)
@@ -1328,17 +1350,20 @@ class TestmirrorSeek(YrfsCli):
         finally:
             self.sshclient1.ssh_exec("rm -fr " + testpath2)
 
+    @pytest.mark.parametrize("cache", ("cache", "none"))
+    @pytest.mark.parametrize("lazy", ("true", "false"))
     @pytest.mark.skipif(len(consts.CLIENT) < 2, reason="need two client")
-    def test_seek_4056(self):
+    def test_seek_4056(self, cache, lazy):
         """
-        4056 两个客户端并发读同一tiering目录下的大量文件（s3 mirror）
+        4056 两个客户端并发读同一tiering目录下的大量文件
         """
         client2 = consts.CLIENT[1]
         sshclient2 = sshClient(client2)
         fnames = []
         # 客户端挂载
-        mount1 = client_mount(self.client1, acl_add=True)
-        mount2 = client_mount(client2, acl_add=True)
+        param = self.__make_param(cache, lazy)
+        mount1 = client_mount(self.client1, acl_add=True, param=param)
+        mount2 = client_mount(client2, acl_add=True, param=param)
         assert mount1 == 0 and mount2 == 0, "Client mount failed."
         # 写入测试数据
         self.sshclient1.ssh_exec(self.fio.format("1024M", self.testpath, 400))

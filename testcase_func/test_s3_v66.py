@@ -1,6 +1,6 @@
 # coding=utf-8
 """
-@Desciption : s3 tiering mirror case suite
+@Desciption : s3 tiering case
 @Time : 2020/5/27 18:47
 @Author : caoyi
 """
@@ -34,8 +34,7 @@ def get_data(request):
 
 @pytest.mark.skipif(yrfs_version <= 66, reason="only 66* verison need run.")
 # @pytest.mark.skip(reason="Expect skip")
-@pytest.mark.funcTest
-class TesttieringMirror(YrfsCli):
+class TestTiering(YrfsCli):
 
     def setup_class(self):
         # 变量定义
@@ -52,7 +51,6 @@ class TesttieringMirror(YrfsCli):
             if yum_stat != 0:
                 pytest.skip(msg="Not found FIO,test skip", allow_module_level=True)
         self.bucketid = consts.s3["bucketid"]
-        self.mirrorid = consts.s3["mirrorid"]
         self.fio = "fio -iodepth=16 -numjobs=1 -bs=4K -ioengine=psync -group_report -name=autotest -size={} \
         -directory={} -nrfiles={} -direct"
         # 添加bucket
@@ -72,21 +70,11 @@ class TesttieringMirror(YrfsCli):
         add_stat, _ = self.sshserver.ssh_exec(bucket_add)
         if add_stat != 0:
             pytest.skip(msg="add bucket failed, skip", allow_module_level=True)
-        # 添加mirror
-        mirror_add = self.get_cli(self, "bucket_add", consts.s3["hostname"], consts.s3["protocol"],
-                                  consts.s3["bucketmirror"],
-                                  consts.s3["uri_style"], consts.s3["region"], consts.s3["access_key"],
-                                  consts.s3["secret_access_key"],
-                                  consts.s3["token"], consts.s3["type"], consts.s3["mirrorid"])
-        self.sshserver.ssh_exec(self.get_cli(self, "bucket_del", consts.s3["mirrorid"]))
-        add_stat, _ = self.sshserver.ssh_exec(mirror_add)
-        if add_stat != 0:
-            pytest.skip(msg="add bucket failed, test skip", allow_module_level=True)
 
     def teardown_class(self):
         bucket_del = self.get_cli(self, "bucket_del", consts.s3["bucketid"])
-        self.sshserver.ssh_exec(bucket_del)
-        self.sshserver.ssh_exec(self.get_cli(self, "bucket_del", consts.s3["mirrorid"]))
+        del_stat, _ = self.sshserver.ssh_exec(bucket_del)
+        assert del_stat == 0, "delete bucket failed."
 
         self.sshclient1.close_connect()
         self.sshserver.close_connect()
@@ -95,17 +83,16 @@ class TesttieringMirror(YrfsCli):
         """
         caseID: 3383 校验并发删除不同目录下文件有效
         """
-        tier_id = "9999"
+        tiering_id = "999"
+        layer = ""
         try:
-            layers = ""
             # 本次测试依赖fio
             # fio_stat, _ = self.sshclient1.ssh_exec("fio --version")
             # if fio_stat != 0:
             #     pytest.skip(msg="fio not installed. test skip.")
             # 创建目录并添加分层
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "60",
-                                    "00:00", tier_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "60", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -134,11 +121,11 @@ class TesttieringMirror(YrfsCli):
             self.sshclient1.ssh_exec(fio_cmd3)
             logger.info("sleep 60s.")
             sleep(60)
-            # # 开启gzip
+            # 开启gzip
             # gzip_stat, _ = self.sshserver.ssh_exec(self.get_cli("s3_gzip", "true"))
             # assert gzip_stat == 0, "open s3 gzip failed."
             # 执行业务上传操作
-            flush_cmd = self.get_cli("tiering_flush", tier_id)
+            flush_cmd = self.get_cli("tiering_flush", tiering_id)
             flush_stat, _ = self.sshserver.ssh_exec(flush_cmd)
             logger.info("sleep 10s.")
             sleep(10)
@@ -150,11 +137,11 @@ class TesttieringMirror(YrfsCli):
                 entry_cmd = self.get_cli("get_entry", f)
 
                 for i in range(10):
-                    _, layers = self.sshserver.ssh_exec(entry_cmd)
-                    layers = re.findall("Data Location: (.*)\n", layers)
-                    layers = "".join(layers)
+                    _, layer = self.sshserver.ssh_exec(entry_cmd)
+                    layer = re.findall("Data Location: (.*)\n", layer)
+                    layer = "".join(layer)
 
-                    if layers == "S3":
+                    if layer == "S3":
                         logger.info("file: %s put S3 success." % f)
                         break
                     else:
@@ -168,7 +155,7 @@ class TesttieringMirror(YrfsCli):
 
             # 删除测试目录
             rm_stat, _ = self.sshclient1.ssh_exec("rm -fr %s/*" % consts.MOUNT_DIR)
-            del_stat, _ = self.sshserver.ssh_exec(self.get_cli('tiering_del', tier_id))
+            del_stat, _ = self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
 
             assert add_stat == 0, "add tiering failed."
             assert mk_stat1 == 0, "mkdir failed."
@@ -176,26 +163,25 @@ class TesttieringMirror(YrfsCli):
             assert fio_stat1 == 0, "fio run failed."
             assert fio_stat2 == 0, "fio run failed."
             assert flush_stat == 0, "tiering flush cmd failed."
-            assert layers == "S3", "put s3 failed."
+            assert layer == "S3", "put s3 failed."
             assert rm_stat == 0, "remove s3 file failed."
-            assert del_stat == 0, "del tiering id %s failed." % tier_id
+            assert del_stat == 0, "del tiering id %s failed." % tiering_id
 
         finally:
             self.sshclient1.ssh_exec("ps axu|grep fio|grep -v grep|awk '{print $2}'|xargs -I {} kill -9 {}")
             self.sshserver.ssh_exec(self.get_cli("acl_id_del", self.testdir, self.acl_id))
             self.sshserver.ssh_exec("rm -fr " + self.testpath)
-            self.sshserver.ssh_exec(self.get_cli('tiering_del', tier_id))
+            self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
 
     def test_del_dir(self, get_data):
         """
         caseID: 3315 校验后端单独删除分层关系（tire id），目录非空删除失败
         """
         # 创建目录并添加分层
-        tiering_id = "9999"
+        tiering_id = "999"
         try:
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "60",
-                                    "00:00,01:00,05:00",
+            add_tier = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "60", "00:00,01:00,05:00",
                                     tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
@@ -224,8 +210,8 @@ class TesttieringMirror(YrfsCli):
         testpath = self.testpath + "/" + subdir
         try:
             self.sshserver.ssh_exec("mkdir -p " + testpath)
-            add_tier = self.get_cli("mirror_add", testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "60",
-                                    "00:00,01:00,05:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", testdir, consts.s3["bucketid"], "60", "00:00,01:00,05:00",
+                                    tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -241,18 +227,18 @@ class TesttieringMirror(YrfsCli):
         """
         caseID: 3313 校验非空目录创建分层，该目录下的历史数据（建立分层前的文件）上传S3失败
         """
-        tiering_id = "9999"
+        layer_res = ""
+        layer = ""
+        tiering_id = "999"
         testfile = self.testdir + "/file1"
         testpath = self.testpath + "/file1"
         dd = "dd if=/dev/zero of=%s bs=1M count=1 oflag=direct" % testpath
-        layer_res = ""
-        layer = ""
         try:
             # 先写入数据
             self.sshserver.ssh_exec("mkdir -p %s" % self.testpath)
             self.sshserver.ssh_exec(dd)
-            add_tier = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "60",
-                                    "00:00,01:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "60", "00:00,01:00",
+                                    tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -294,12 +280,11 @@ class TesttieringMirror(YrfsCli):
         """
         caseID:  3287 校验后端删除目录时，分层关系、时间策略和目录下所有文件删除成功
         """
-        tiering_id = "9999"
+        tiering_id = "999"
         try:
             # 新建分层关系
             self.sshserver.ssh_exec("mkdir -p %s" % self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "60",
-                                    "00:00,01:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "60", "00:00,01:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -331,16 +316,16 @@ class TesttieringMirror(YrfsCli):
         """
         caseID:  3285 校验rename目录名称，对象存储及策略不变，list中path为更改后的名称
         """
-        tiering_id = "9999"
+        layer = ""
+        tiering_id = "999"
         new_testdir = self.testdir + "_new"
         new_testpath = self.testpath + "_new"
         testfile = new_testpath + "/file1"
-        layer = ""
+
         try:
             # 新建分层关系
             self.sshserver.ssh_exec("mkdir -p %s" % self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "60",
-                                    "00:00,01:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "60", "00:00,01:00", tiering_id)
             self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -390,13 +375,12 @@ class TesttieringMirror(YrfsCli):
             self.sshserver.ssh_exec("rm -fr " + new_testpath)
             self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
 
-    #@pytest.mark.skip
     def test_subdir_inherit(self, get_data):
         """
         caseID: 3281 校验子目录设置不同的对象存储，子子目录跟随子目录
         """
-        tiering_id = "9999"
         layer = ""
+        tiering_id = "999"
         try:
             # 查询当前时间
             _, current_time = self.sshserver.ssh_exec("date '+%H:%M'")
@@ -416,8 +400,7 @@ class TesttieringMirror(YrfsCli):
             flush_time = hour_later + ":" + minutes_later
             # 设置tiering
             self.sshserver.ssh_exec("mkdir -p %s" % self.testpath)
-            add_tier1 = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "600",
-                                     "00:00,01:00", "998")
+            add_tier1 = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "600", "00:00,01:00", "998")
             add_stat1, _ = self.sshserver.ssh_exec(add_tier1)
             assert add_stat1 == 0, "add tiering failed."
             # 设置s3模式
@@ -425,8 +408,8 @@ class TesttieringMirror(YrfsCli):
             assert stat == 0, "set mode failed."
             sleep(2)
             self.sshserver.ssh_exec("mkdir -p %s/dir1" % self.testpath)
-            add_tier2 = self.get_cli("mirror_add", self.testdir + "/dir1", consts.s3["bucketid"], self.mirrorid,
-                                     "30", flush_time, tiering_id)
+            add_tier2 = self.get_cli("tiering_add", self.testdir + "/dir1", consts.s3["bucketid"], "30", flush_time,
+                                     tiering_id)
             add_stat2, _ = self.sshserver.ssh_exec(add_tier2)
             assert add_stat2 == 0, "add tiering failed."
             # 设置s3模式
@@ -466,11 +449,10 @@ class TesttieringMirror(YrfsCli):
         caseID:  3280 校验父目录设置了下刷目录，子目录新增新对象存储
         """
         layer = ""
-        parent_id = "9999"
-        child_id = "9998"
+        parent_id = "999"
+        child_id = "998"
         parent_bid = consts.s3['bucketid']
         child_bid = consts.s3['bucketid']
-
         try:
             _, current_time = self.sshserver.ssh_exec("date '+%H:%M'")
             hour = current_time.split(":")[0]
@@ -489,8 +471,7 @@ class TesttieringMirror(YrfsCli):
                 flush_times.append(flush_time)
             # 创建测试目录
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_parent = self.get_cli("mirror_add", self.testdir, parent_bid, consts.s3["mirrorid"], "30",
-                                      flush_times[0], parent_id)
+            add_parent = self.get_cli("tiering_add", self.testdir, parent_bid, "30", flush_times[0], parent_id)
             # 添加tiering
             add_stat1, _ = self.sshserver.ssh_exec(add_parent)
             # 设置s3模式
@@ -499,8 +480,7 @@ class TesttieringMirror(YrfsCli):
             sleep(2)
             # 添加子目录tiering
             self.sshserver.ssh_exec("mkdir -p " + self.testpath + "/dir1")
-            add_child = self.get_cli("mirror_add", self.testdir + "/dir1", child_bid, consts.s3["mirrorid"], "30",
-                                     flush_times[1], child_id)
+            add_child = self.get_cli("tiering_add", self.testdir + "/dir1", child_bid, "30", flush_times[1], child_id)
             add_stat2, _ = self.sshserver.ssh_exec(add_child)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir + "/dir1", get_data))
@@ -583,8 +563,8 @@ class TesttieringMirror(YrfsCli):
         3678 （非空目录quota）部分文件已上传至s3设置后统计正确
         2451 校验下载过程中，有上传任务有效
         """
-        tiering_id = "9999"
         layer = ""
+        tiering_id = "999"
         try:
             # 本次测试依赖fio
             fio_stat, _ = self.sshclient1.ssh_exec("fio --version")
@@ -592,8 +572,7 @@ class TesttieringMirror(YrfsCli):
                 pytest.skip(msg="fio not installed. test skip.")
             # 添加tiering分层
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, consts.s3["bucketid"], consts.s3["mirrorid"], "1",
-                                    "00:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, consts.s3["bucketid"], "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             assert add_stat == 0, "add tiering failed"
             # 设置s3模式
@@ -742,8 +721,8 @@ class TesttieringMirror(YrfsCli):
         """
         3275 校验16层quota目录及qos目录添加对象类型及策略有效
         """
-        tiering_id = "9999"
         layer = ""
+        tiering_id = "999"
         try:
             # 创建测试数据
             test_subdir = self.testdir + "/d1/d2/d3/d4/d5/d6/d7/d8/d9/d10/d11/d12/d13/d14/d15"
@@ -756,8 +735,7 @@ class TesttieringMirror(YrfsCli):
             quota, _ = self.sshserver.ssh_exec(self.get_cli("nquota_add", test_subdir, "2G", "2000"))
             assert quota == 0, "add quota failed"
             # 添加分层
-            add_tier = self.get_cli("mirror_add", test_subdir, consts.s3["bucketid"], consts.s3["mirrorid"], "1",
-                                    "00:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", test_subdir, consts.s3["bucketid"], "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             assert add_stat == 0, "add tiering failed"
             # 设置s3模式
@@ -810,13 +788,12 @@ class TesttieringMirror(YrfsCli):
         """
         3704 校验上传中，删除文件成功
         """
-        tiering_id = "9999"
+        tiering_id = "999"
         bucket_id = consts.s3['bucketid']
         try:
             # 添加分层
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, bucket_id, consts.s3["mirrorid"], "1", "00:00",
-                                    tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, bucket_id, "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -855,15 +832,14 @@ class TesttieringMirror(YrfsCli):
         """
         3766 校验新建目录对小文件设置不同得策略上传下载有效
         """
-        tiering_id = "9999"
+        tiering_id = "999"
         bucket_id = consts.s3['bucketid']
         policy = "4k:5,512k:20,1M:500,20M:500,1G:2000"
         dd = "dd if=/dev/zero of={} bs={} count=1 oflag=direct"
         try:
             # 添加分层
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, bucket_id, consts.s3["mirrorid"], "1", "00:00",
-                                    tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, bucket_id, "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -901,7 +877,7 @@ class TesttieringMirror(YrfsCli):
         """
         2428 校验前后台修改密钥,上传下载失败
         """
-        tiering_id = "9999"
+        tiering_id = "999"
         dd = "dd if=/dev/zero of={} bs={} count=1 oflag=direct"
         bucketid = consts.s3["bucketid"]
         ackey = consts.s3["access_key"]
@@ -911,8 +887,7 @@ class TesttieringMirror(YrfsCli):
         # 添加分层
         try:
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, bucketid, consts.s3["mirrorid"], "1", "00:00",
-                                    tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, bucketid, "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置tiering mode
             self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -931,7 +906,7 @@ class TesttieringMirror(YrfsCli):
         """
         3768 校验修改文件大小，按照文件属性大小上传
         """
-        tiering_id = "9999"
+        tiering_id = "999"
         dd = "cd %s&&dd if=/dev/zero of={} bs={} count=1 oflag=direct" % consts.MOUNT_DIR
         dd_append = "cd %s&&dd if=/dev/zero of={} bs=1k count={} oflag=append conv=notrunc" % consts.MOUNT_DIR
         f_4k = self.testdir + "/autotest_4k"
@@ -940,8 +915,8 @@ class TesttieringMirror(YrfsCli):
         try:
             # 添加分层
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
-            add_tier = self.get_cli("mirror_add", self.testdir, self.bucketid, self.mirrorid, "1", "00:00",
-                                    tiering_id) + " --mode=%s --policy=4k:200,100k:4,512k:8" % get_data
+            add_tier = self.get_cli("tiering_add", self.testdir, self.bucketid, "1", "00:00", tiering_id) + \
+                       " --mode=%s --policy=4k:200,100k:4,512k:8" % get_data
             self.sshserver.ssh_exec(add_tier)
             # 创建测试文件
             self.sshserver.ssh_exec(dd.format(f_4k, "4k"))
@@ -965,6 +940,20 @@ class TesttieringMirror(YrfsCli):
             self.sshserver.ssh_exec("rm -fr " + self.testpath)
             self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
 
+    @pytest.mark.skip
+    def test_root_tiering(self, get_data):
+        """
+        3259 校验安装后根目录添加S3有效
+        """
+        tiering_id = "999"
+        bucket_id = consts.s3['bucketid']
+        try:
+            add_tier = self.get_cli("tiering_add", "", bucket_id, "1", "00:00", tiering_id) + " --mode=" + get_data
+            add_stat, _ = self.sshserver.ssh_exec(add_tier)
+            assert add_stat == 0, "add / tiering failed."
+        finally:
+            self.sshserver.ssh_exec(self.get_cli("tiering_del", tiering_id))
+
     def test_downloading_rw(self, get_data):
         """
         2450 （自动化）校验下载过程中，读写非下载文件，未hang
@@ -979,7 +968,7 @@ class TesttieringMirror(YrfsCli):
             if mount_stat != 0:
                 pytest.skip(msg="client mount failed. test skip.")
             # 添加分层
-            add_tier = self.get_cli("mirror_add", self.testdir, bucket_id, self.mirrorid, "1", "00:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, bucket_id, "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -1017,6 +1006,32 @@ class TesttieringMirror(YrfsCli):
             self.sshserver.ssh_exec("rm -fr " + self.testpath)
             self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
 
+    @pytest.mark.skip
+    def test_tiering_delete(self, get_data):
+        """
+        删除目录的tiering属性后，再次创建的文件仍然具备tiering属性
+        """
+        tiering_id = "9006"
+        bucket_id = consts.s3['bucketid']
+        try:
+            # 创建测试目录
+            self.sshserver.ssh_exec("mkdir -p " + self.testpath)
+            # 设置tiering属性
+            add_tier = self.get_cli("tiering_add", self.testdir, bucket_id, "1", "00:00", tiering_id)
+            add_stat, _ = self.sshserver.ssh_exec(add_tier)
+            # 设置s3模式
+            stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
+            assert stat == 0, "set mode failed."
+            # 删除目录属性
+            self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
+            # 写入数据
+            self.sshserver.ssh_exec("touch %s/file" % self.testpath)
+            # 查看文件属性
+            check_layer(fname=self.testdir + "/file", layer="Local", tierid="0")
+        finally:
+            self.sshserver.ssh_exec("rm -fr " + self.testpath)
+            self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
+
     def test_uploading_delete(self, get_data):
         """
         2482 校验删除过程中，有上传文件有效,2481 校验删除过程中，读写其他目录文件正常
@@ -1033,7 +1048,7 @@ class TesttieringMirror(YrfsCli):
             # 创建测试数据
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
             # 添加分层
-            add_tier = self.get_cli("mirror_add", self.testdir, bucket_id, self.mirrorid, "1", "00:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, bucket_id, "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             # 设置s3模式
             stat, _ = self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
@@ -1066,10 +1081,10 @@ class TesttieringMirror(YrfsCli):
             # stat, _ = self.sshclient1.ssh_exec('ps axu|grep -E "\'rm -fr\'|\'ls -al\'"|grep -v grep')
             # assert stat == 0, "rm or ls process hung."
             # 执行fsck操作
-            stat = fsck()
-            assert stat == 0, "fsck check failed."
+            # stat = fsck()
+            # assert stat == 0, "fsck check failed."
         finally:
-            self.sshclient1.ssh_exec('ps axu|grep -E "\'rm -fr\'|\'ls -al\'"|grep -v grep|xargs -I {} kill -9 {}')
+            self.sshclient1.ssh_exec('ps axu|grep "\'rm -fr\'|\'ls -al\'"|grep -v grep|xargs -I {} kill -9 {}')
             self.sshserver.ssh_exec("rm -fr " + self.testpath)
             self.sshserver.ssh_exec(self.get_cli('tiering_del', tiering_id))
 
@@ -1087,7 +1102,7 @@ class TesttieringMirror(YrfsCli):
             stat = client_mount(self.client1, acl_add=True)
             assert stat == 0, "client mount failed."
             # 添加分层
-            add_tier = self.get_cli("mirror_add", self.testdir, self.bucketid, self.mirrorid, "1", "00:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, self.bucketid, "1", "00:00", tiering_id)
             add_stat, _ = self.sshserver.ssh_exec(add_tier)
             self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
             # 创建测试文件
@@ -1140,7 +1155,7 @@ class TesttieringMirror(YrfsCli):
             # 创建测试文件
             self.sshserver.ssh_exec("mkdir -p " + self.testpath)
             # 添加分层
-            add_tier = self.get_cli("mirror_add", self.testdir, self.bucketid, self.mirrorid, "1", "00:00", tiering_id)
+            add_tier = self.get_cli("tiering_add", self.testdir, self.bucketid, "1", "00:00", tiering_id)
             self.sshserver.ssh_exec(add_tier)
             self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, get_data))
             # 客户端挂载
