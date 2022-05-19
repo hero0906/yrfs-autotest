@@ -11,12 +11,15 @@ CASE_TYPE = "allTest"
 #version 660 663 664 670
 YRFS_VERSION = "670"
 
-# META1 = "192.168.12.161"
-# CLIENT = ["192.168.12.110", "192.168.12.109"]
+#CLIENT = ["192.168.96.253", "192.168.96.254"]
 META1 = "10.16.2.11"
 CLIENT = ["10.16.2.17", "10.16.2.18"]
 # META1 = "192.168.0.23"
 # CLIENT = ["192.168.0.40"]
+# 集群ssh用户名密码
+USERNAME = "root"
+PASSWORD = "Passw0rd"
+
 WINCLIENT = "10.16.2.16"
 NFS_PORT = 7735
 
@@ -27,11 +30,6 @@ CLIENT_CONFIG = "/etc/yrfs/yrfs-client.conf"
 CLIENT_MOUNT_FILE = "/etc/yrfs/yrfs-mounts.conf"
 CLIENT_NET_FILE = '/etc/yrfs/net'
 
-# meta挂载测试目录
-METADIR = "/data/mds"
-# 集群ssh用户名密码
-USERNAME = "root"
-PASSWORD = "Passw0rd"
 
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TESTDATA_PATH = os.path.join(BASE_PATH, 'testdata')
@@ -43,14 +41,14 @@ MOUNT_DIR = "/mnt/yrfs"
 # s3配置信息
 s3 = {
     # "hostname": "10.16.13.12:7480",
-    "hostname": "19.16.2.18:9000",
+    "hostname": "192.168.0.26:7480",
     # "bucketname": "zh_ossbucket",
-    "bucketname": "testcao",
-    "bucketmirror": "testcao1",
+    "bucketname": "cytest1",
+    "bucketmirror": "cytest2",
     # "access_key": "9X4U5WAL4NZHAY6PBTG6",
-    "access_key": "minioadmin",
+    "access_key": "S3WJ1MF510XK108C39GQ",
     # "secret_access_key": "qmEZRml9vurEB9NPSxnpdDlKH5dWdI5NPG1wyIrq",
-    "secret_access_key": "minioadmin",
+    "secret_access_key": "nEzsLZAQT01s2SPjJirsA7IPG5hf8pvUvXrCctNl",
     "region": "",
     "token": "",
     "type": "libs3",

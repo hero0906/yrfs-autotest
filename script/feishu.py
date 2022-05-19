@@ -210,4 +210,4 @@ def report_extract(mail=True):
             send_email(content_mail, users="test")
 
 if __name__ == "__main__":
-    report_extract()
+    report_extract(mail=False)

@@ -110,6 +110,10 @@ class Test_subdirUnmount(YrfsCli):
                 mount_conf = "%s /etc/yrfs/yrfs-client.conf /%s" % (self.MOUNT_DIR + str(i), testdir)
                 self.sshclient.ssh_exec("echo \"%s\" >> %s" % (mount_conf, consts.CLIENT_MOUNT_FILE))
             self.sshclient.ssh_exec("/etc/init.d/yrfs-client start")
+            #删除权限
+            for i in range(1, 10):
+                testdir = self.testdir + str(i)
+                self.sshserver.ssh_exec(self.get_cli("acl_ip_del", testdir, "*"))
             # 删除子目录
             self.sshserver.ssh_exec("cd %s&&rm -fr %s*" % (self.MOUNT_DIR, self.testdir))
             sleep(2)
@@ -123,7 +127,4 @@ class Test_subdirUnmount(YrfsCli):
             stat, _ = self.sshclient.ssh_exec("cat /etc/mtab|grep %s" % self.MOUNT_DIR)
             assert stat != 0, "Expect mtab failed."
         finally:
-            for i in range(1, 10):
-                testdir = self.testdir + str(i)
-                self.sshserver.ssh_exec(self.get_cli("acl_ip_del", testdir, "*"))
             self.sshserver.ssh_exec("cd %s&&rm -fr %s*" % (self.MOUNT_DIR, self.testdir))

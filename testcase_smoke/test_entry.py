@@ -75,7 +75,6 @@ class TestEntry(YrfsCli):
                 i = i.split(":")
                 inode_dict[i[0]] = i[1].strip()
             assert inode_dict["metaType"] == "dir"
-            assert inode_dict["numSubdirs"] == "1"
             assert inode_dict["numFiles"] == "1"
             keys = [i for i in inode_dict.keys()]
             assert "formatVer" in keys
@@ -88,6 +87,8 @@ class TestEntry(YrfsCli):
             assert "stripeType" in keys
             assert "eid" in keys
             assert "stripeSize" in keys
+            assert inode_dict["numSubdirs"] == "1"
+
         finally:
             sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, testdir))
             sshserver.close_connect()

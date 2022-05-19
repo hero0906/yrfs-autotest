@@ -11,7 +11,8 @@ if not os.path.exists(LOG_PATH):
 
 args = []
 
-base = ["-vs","--tb=long"]
+#base = ["-vs","--tb=long"]
+base = ["-sv","--tb=long"]
 #module = ["-k " + MODULE_NAME]
 #junit报告生成
 junit = ["--junitxml=logs/report.xml"]

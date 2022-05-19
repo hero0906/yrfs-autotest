@@ -49,6 +49,6 @@ def set_ips(ip_prefix,ip_end):
         ssh.close_connect()
 #set_ips(ip_prefix="192.168.12",ip_end=(161,162,163,164),netmask ="255.255.0.0",gateway="192.168.0.1",device_name="ens224")
 #set_ips(ip_prefix="10.16.2", ip_end=(11,12,13,14))
-#set_ips(ip_prefix="192.168.14", ip_end=(110,111,112,113))
+set_ips(ip_prefix="192.168.96", ip_end=(111,112,113,114))
 #set_ips(ip_prefix="192.168.13", ip_end=(211,212,213,214))
-set_ips(ip_prefix="192.168.13", ip_end=(201,202,203,208))
+#set_ips(ip_prefix="192.168.13", ip_end=(201,202,203,208))
