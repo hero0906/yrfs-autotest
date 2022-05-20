@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
-                 aclid=None, type='ip4', param=None, mode=None,
+                 aclid=None, type='ip6', param=None, mode=None,
                  acl_add=False):
     """
     :param mode:
@@ -52,22 +52,30 @@ def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
         if type == "ip6":
 
             cmd = yrcli.get_cli('oss_node') + "|grep IPv6 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|" + \
-                  "awk -F '<' '{print $2}'|grep fe80|uniq|head -n 3"
-            _, mgmt_ip6_tmp = sshserver.ssh_exec(cmd).split("\n")
-            mgmt_ip6s = ",".join(mgmt_ip6_tmp)
+                  "awk -F '<' '{print $2}'|uniq|head -n 3"
+            _, mgmt_ip6_tmp = sshserver.ssh_exec(cmd)
+            mgmt_ip6s = ",".join(mgmt_ip6_tmp.split("\n"))
             # 写入ip6地址到client配置文件
             sshclient.ssh_exec('echo "cluster_addr = %s" > %s' % (mgmt_ip6s, CLIENTCONF))
             if param:
                 sshclient.ssh_exec('echo "%s" >> %s' % (param, CLIENTCONF))
-            # 获取ip6 address前缀
-            prefix = ip6_Prefix(mgmt_ip6_tmp[0])
+            # 获取net文件
+            _, netfile = sshserver.ssh_exec("cat " + consts.CLIENT_NET_FILE)
+            #prefix = ip6_Prefix(mgmt_ip6_tmp[0])
             # 写入net文件
-            sshclient.ssh_exec('echo "%s" > %s' % (prefix, consts.CLIENT_NET_FILE))
+            sshclient.ssh_exec('echo -e "%s" > %s' % (netfile, consts.CLIENT_NET_FILE))
             # 写入挂载目录到mounts配置文件
-            sshclient.ssh_exec(
-                "echo -e \"{mountpoint} {config} {path} {Id}\" > {mount_file}".format(mountpoint=mountpoint,
-                                                                                      config=CLIENTCONF, path=subdir,
-                                                                                      Id=aclid, mount_file=CLIENTCONF))
+            if aclid:
+                mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir + " " + aclid
+                if mode:
+                    mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir + " " + aclid + " yrfs " + mode
+                # sshclient.ssh_exec("echo -e \"{mountpoint} {config} {path} {Id}\" > {mount_file}".format(mountpoint=mountpoint,
+                #         config=consts.CLIENT_CONFIG, path=subdir, Id=aclid, mount_file=consts.CLIENT_MOUNT_FILE))
+            else:
+                mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir
+                if mode:
+                    mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir + " none yrfs " + mode
+            sshclient.ssh_exec("echo \"%s\" > %s" % (mount_conf, MOUNTCONF))
             sshclient.ssh_exec("/etc/init.d/yrfs-client start")
             stat, res = sshclient.ssh_exec('findmnt ' + mountpoint)
             if stat == 0:
@@ -83,7 +91,7 @@ def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
                     sshserver.ssh_exec(yrcli.get_cli("acl_ip_add", subdir, "*", "rw"))
 
                 cmd = yrcli.get_cli(
-                    'oss_node') + "|grep IPv4 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|" + \
+                    'oss_node') + "|grep IPv6 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|" + \
                       "awk -F '<' '{print $2}'|uniq|head -n 3"
                 _, mgmt_ip4_tmp = sshserver.ssh_exec(cmd)
                 mgmt_ip4 = ",".join(mgmt_ip4_tmp.split('\n'))

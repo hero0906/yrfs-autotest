@@ -13,6 +13,7 @@ from config import consts
 from common.util import ssh_exec,read_config,ip6_Prefix
 from depend.skip_mark import verify_mount_point
 from common.cluster import get_client_storageip
+from depend.client import client_mount
 
 client = consts.CLIENT[0]
 ip = consts.META1
@@ -56,7 +57,7 @@ class Test_dir_mount(YrfsCli):
         客户端acl ip4挂载
         '''
         ssh_exec(client, "/etc/init.d/yrfs-client stop")
-        cmd = self.get_cli('oss_node') + "|grep IPv4 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|awk -F '<'\
+        cmd = self.get_cli('oss_node') + "|grep IPv6 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|awk -F '<'\
          '{print $2}'|uniq|head -n 3"
         mgmt_ip4_tmp = ssh_exec(ip, cmd).split("\n")
         mgmt_ip4 = ",".join(mgmt_ip4_tmp)
@@ -83,7 +84,7 @@ class Test_dir_mount(YrfsCli):
         '''
         ssh_exec(client, "/etc/init.d/yrfs-client stop")
         #获取其他节点yrfs-cient.conf
-        cmd = self.get_cli('oss_node') + "|grep IPv4 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|awk -F '<'\
+        cmd = self.get_cli('oss_node') + "|grep IPv6 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|awk -F '<'\
          '{print $2}'|uniq|head -n 3"
         mgmt_ip4_tmp = ssh_exec(ip, cmd).split("\n")
         mgmt_ip4 = ",".join(mgmt_ip4_tmp)

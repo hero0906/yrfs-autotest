@@ -69,7 +69,7 @@ def get_Cluster_Hostip():
 
         new_ips = []
         for ip_raw in ips_raw:
-            ip_tmp = re.findall(r"<(.+?) TCP/IPv4", ip_raw)
+            ip_tmp = re.findall(r"<(.+?) TCP/IPv6", ip_raw)
             new_ips.append(ip_tmp)
 
         # ips_tmp = re.findall(r"<(.+?) TCP/IPv4", res)
@@ -204,8 +204,8 @@ def get_client_storageip(ip):
     # 获取第字典的第一位值
     storage_ip = [i for i in host_and_ip.values()][0][0]
 
-    prefix_list = storage_ip.split(".")[0:2]
-    prefix_str = ".".join(prefix_list)
+    prefix_list = storage_ip.split(":")[0]
+    prefix_str = prefix_list + ":"
 
     client_storage_ip = ssh_exec(ip, "ifconfig|grep -w %s|awk '{print $2}'" % prefix_str)
     logger.info("client %s storage network segment ip: %s." % (ip, client_storage_ip))
