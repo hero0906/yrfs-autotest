@@ -11,6 +11,7 @@ from config import consts
 from common.util import sshClient
 from depend.client import client_mount
 
+@pytest.mark.skip
 @pytest.mark.smokeTest
 class TestaclCidr(YrfsCli):
 
