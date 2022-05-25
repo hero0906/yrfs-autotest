@@ -95,7 +95,7 @@ class Test_pageCache(YrfsCli):
         """
         2243 （自动化）验证posix语义正确性
         """
-        fstest_dir = "/tmp/pjdfstest-yrfs"
+        fstest_dir = "/opt/pjdfstest-yrfs"
         #检验prove工具是否安装
         stat, _ = self.sshclient.ssh_exec("which prove")
         if stat != 0:
@@ -108,9 +108,9 @@ class Test_pageCache(YrfsCli):
         stat, _ = self.sshclient.ssh_exec("stat " + fstest_dir)
         if stat != 0:
             sshsftp = sshSftp(self.clientip)
-            sshsftp.sftp_upload("tools/pjdfstest-yrfs.tar.gz", "/tmp/pjdfstest-yrfs.tar.gz")
+            sshsftp.sftp_upload("tools/pjdfstest-yrfs.tar.gz", "/opt/pjdfstest-yrfs.tar.gz")
             sshsftp.close_connect()
-            self.sshclient.ssh_exec("tar -zxvf /tmp/pjdfstest-yrfs.tar.gz -C /tmp")
+            self.sshclient.ssh_exec("tar -zxvf /opt/pjdfstest-yrfs.tar.gz -C /opt")
 
         logger.info("Run fstest %s" % consts.MOUNT_DIR)
 

@@ -503,14 +503,16 @@ def main():
     for i in range(6):
         #vm_name = "曹毅_670_单副本HA测试_node" + str(i)
         #vm_name = "曹毅_663现网科大的问题bug6357验证测试_节点_ " + str(i)
-        vm_name = "曹毅_670_扩容测试_节点" + str(i)
-        #mac_addr = "00:60:67:8d:95:b" + str(i)
+        vm_name = "曹毅_680测试_节点" + str(i)
+        mac_addr = "00:60:67:8d:95:b" + str(i)
         #mac_addr = "00:60:67:8d:95:a" + str(i)
-        mac_addr = None
+        #mac_addr = None
         disk_num = 5
         disk_size = 20
         sys_disk_size = 80
-        datas = ["15-env-4.1", "15-env-4.1", "15-env-4.2", "15-env-4.2", "15-env-5.2","15-env-5.2"]
+        #datas = ["15-env-4.1", "15-env-4.1", "15-env-4.2", "15-env-4.2", "15-env-5.2","15-env-5.2"]
+        #datas = ["15-env-3.1", "15-env-3.1", "15-env-3.1", "15-env-3.2", "15-env-3.2", "15-env-3.2"]
+        datas = ["15-env-4.1", "15-env-4.1", "15-env-4.2", "15-env-4.2", "15-env-4.1", "15-env-4.2"]
         #datas = ["15-share-1", "15-env-4.1", "15-env-4.2", "15-env-4.2", "15-env-5.2","15-env-5.2"]
         #datas = ["14-SSD","14-SSD","14-SSD","14-SSD",]
         create_exhaustive_vm = CreateVM()
@@ -529,8 +531,8 @@ def main():
                                        exsihost="192.168.0.15",
                                        vm_name=vm_name,
                                        mac_addr=mac_addr,
-                                       cpunum=8,
-                                       memsize=16
+                                       cpunum=4,
+                                       memsize=8
                                        )
         # 删除默认磁盘
         create_exhaustive_vm.del_disk(vm_name=vm_name, disk_number=1)
@@ -562,9 +564,10 @@ if __name__ == '__main__':
     #     # create_vm.cleanup(vm)
     #     create_vm.power_on(vm)
     #     # create_vm.power_on(vm)
-    # for i in range(4):
-    #     vm_name = "曹毅_670_单副本HA测试_node" + str(i)
-    #     create_exhaustive_vm = CreateVM()
-    #     create_exhaustive_vm.add_disk(vm_name=vm_name,
-    #                                   disk_size=20,
-    #                                   disk_type="thick")
+    #  for i in range(4):
+    #      #vm_name = "曹毅_670_单副本HA测试_node" + str(i)
+    #      vm_name = "曹毅_670_centos7.6_kehuduan0(96.253)"
+    #      create_exhaustive_vm = CreateVM()
+    #      create_exhaustive_vm.add_disk(vm_name=vm_name,
+    #                                    disk_size=10,
+    #                                    disk_type="thick")

@@ -29,7 +29,7 @@ class TestpythonMamp(YrfsCli):
         self.sshserver = sshClient(serverip)
         self.sshclient = sshClient(self.clientip)
         #检查客户端是否存在mmap模块
-        import_stat, _ = self.sshclient.ssh_exec("python -c \"import mmap\"")
+        import_stat, _ = self.sshclient.ssh_exec("python3 -c \"import mmap\"")
         if import_stat != 0:
            pytest.skip(msg="client need import mmap")
 
@@ -61,9 +61,9 @@ class TestpythonMamp(YrfsCli):
                         "\tf.readline()\n" \
                         "\ttime.sleep(5)\n" \
                         "\tf.close()"
-        self.sshclient.ssh_exec("echo -e \"%s\" > /tmp/autotest_mmap.py&&python /tmp/autotest_mmap.py &" % autotest_mmap)
+        self.sshclient.ssh_exec("echo -e \"%s\" > /tmp/autotest_mmap.pypython3 /tmp/autotest_mmap.py &" % autotest_mmap)
 
-        open_stat, _ = self.sshclient.ssh_exec("echo -e \"%s\" > /tmp/autotest_open.py&&python /tmp/autotest_open.py" \
+        open_stat, _ = self.sshclient.ssh_exec("echo -e \"%s\" > /tmp/autotest_open.pypython3 /tmp/autotest_open.py" \
                                                % autotest_open)
 
         assert open_stat == 0,"test open file failed."

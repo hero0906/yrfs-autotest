@@ -141,11 +141,11 @@ def yrfs_update(config="reboot"):
             repo_bak = ['mkdir -p /etc/yum.repos.d/cy_bak', 'mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/cy_bak',
                         'echo -e "[yrcf-6.4]\nname=yrcf-6.4\nenabled=1\nbaseurl=http://10.16.0.22:17283\ngpgcheck=0" > /etc/yum.repos.d/yrcf.repo']
             meta_service_cmd = "yrfs-meta.service"
-        elif version_res == "6.6"
+        elif version_res == "6.6":
             repo_bak = ['mkdir -p /etc/yum.repos.d/cy_bak', 'mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/cy_bak',
                         'echo -e "[yrcf-6.4]\nname=yrcf-6.4\nenabled=1\nbaseurl=http://192.168.0.22:17286\ngpgcheck=0" > /etc/yum.repos.d/yrcf.repo']
             meta_service_cmd = "yrfs-mds@mds0.service"
-        elif version_res == "6.7"
+        elif version_res == "6.7":
             repo_bak = ['mkdir -p /etc/yum.repos.d/cy_bak', 'mv /etc/yum.repos.d/*.repo /etc/yum.repos.d/cy_bak',
                         'echo -e "[yrcf-6.4]\nname=yrcf-6.4\nenabled=1\nbaseurl=http://192.168.0.22:17284\ngpgcheck=0" > /etc/yum.repos.d/yrcf.repo']
             meta_service_cmd = "yrfs-mds@mds0.service"

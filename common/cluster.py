@@ -51,7 +51,6 @@ def fsck():
 
 # 获取主机名和ipv4地址对应关系的字典
 def get_Cluster_Hostip():
-    ips = ""
     try:
         # 获取主机名
         newCli = YrfsCli()
@@ -66,24 +65,29 @@ def get_Cluster_Hostip():
         # 获取ipv4地址信息
         cmd = newCli.get_cli("oss_node")
         res = ssh_exec(META1, cmd)
-        ips_tmp = re.findall(r"<(.+?) TCP/IPv4", res)
-        if ips_tmp:
-            ips = list(set(ips_tmp))
-            ips.sort(key=ips_tmp.index)
-            logger.info("cluster ip info: %s." % ips)
-        else:
-            logger.error("cluster ip info get failed.")
+        ips_raw = re.findall(r"yrfs-oss(.*?)<sync pools>:", res.replace("\n", ""))
 
-        slice_num = int(len(ips) / len(hosts))
+        new_ips = []
+        for ip_raw in ips_raw:
+            ip_tmp = re.findall(r"<(.+?) TCP/IPv6", ip_raw)
+            new_ips.append(ip_tmp)
 
-        newIps = []
-        for i in range(len(ips)):
-            i = i + 1
-            if i % slice_num == 0:
-                newip = ips[i - slice_num:i]
-                newIps.append(newip)
+        # ips_tmp = re.findall(r"<(.+?) TCP/IPv4", res)
+        # if ips_tmp:
+        #     ips = list(set(ips_tmp))
+        #     ips.sort(key=ips_tmp.index)
+        #     logger.info("cluster ip info: %s." % ips)
+        # else:
+        #     logger.error("cluster ip info get failed.")
+        #
+        # slice_num = int(len(ips) / len(hosts))
 
-        host_and_ip = dict(zip(hosts, newIps))
+        # for i in range(len(ips)):
+        #     i = i + 1
+        #     if i % slice_num == 0:
+        #         newip = ips[i - slice_num:i]
+        #         newIps.append(newip)
+        host_and_ip = dict(zip(hosts, new_ips))
         logger.info("cluster host and ip dict: %s" % host_and_ip)
         return host_and_ip
         # explame
@@ -200,10 +204,10 @@ def get_client_storageip(ip):
     # 获取第字典的第一位值
     storage_ip = [i for i in host_and_ip.values()][0][0]
 
-    prefix_list = storage_ip.split(".")[0:2]
-    prefix_str = ".".join(prefix_list)
+    prefix_list = storage_ip.split(":")[0]
+    prefix_str = prefix_list + ":"
 
-    client_storage_ip = ssh_exec(ip, "ifconfig|grep %s|awk '{print $2}'" % prefix_str)
+    client_storage_ip = ssh_exec(ip, "ifconfig|grep -w %s|awk '{print $2}'" % prefix_str)
     logger.info("client %s storage network segment ip: %s." % (ip, client_storage_ip))
 
     return client_storage_ip
@@ -369,7 +373,7 @@ def check_cluster_health(check_times=1800, hostip=None):
     try:
         # 先检查机器是不是在线
         host_and_ip = get_Cluster_Hostip()
-        server_ips = [i[1] for i in host_and_ip.values()]
+        server_ips = [i[-1] for i in host_and_ip.values()]
         for ip in server_ips:
             for i in range(check_times):
                 stat = ping_test(ip)

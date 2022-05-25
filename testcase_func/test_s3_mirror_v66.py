@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 yrfs_version = int(consts.YRFS_VERSION[:2])
 
-
-@pytest.fixture(scope="function", params=["0", "1"])
+#指定s3分层模式
+@pytest.fixture(scope="function", params=["1"])
 def get_data(request):
     """
     :param request:

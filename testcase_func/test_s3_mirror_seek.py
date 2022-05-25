@@ -207,7 +207,7 @@ class TestmirrorSeek(YrfsCli):
                  "    res = res + t.result()\n" \
                  "print(res)"
 
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython33 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
         /tmp/autotest_tiering_mul_read.py" % script)
 
         assert res == "0", "multi thread read failed."
@@ -268,7 +268,7 @@ class TestmirrorSeek(YrfsCli):
                  "    res = res + t.result()\n" \
                  "print(res)"
 
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
         /tmp/autotest_tiering_mul_read.py" % script)
 
         assert res == "0", "multi thread read failed."
@@ -336,7 +336,7 @@ class TestmirrorSeek(YrfsCli):
         check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
         # seek创建脚本文件读取文件下载测试切片
         script = create_s3_script(fname=testpath, bytesize=104960111)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
         /tmp/autotest_tiering_mul_read.py" % script)
         # 校验顺序读
         assert res == "0", "seq read s3 failed"
@@ -364,7 +364,7 @@ class TestmirrorSeek(YrfsCli):
         check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
         # seek创建脚本文件读取文件下载测试切片
         script = create_s3_script(fname=testpath, bytesize=1049, blocks=5)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
         /tmp/autotest_tiering_mul_read.py" % script)
 
         assert res == "0", "seq read s3 failed"
@@ -547,12 +547,12 @@ class TestmirrorSeek(YrfsCli):
         assert int(df_old) > int(df_upload), "Capacity not reduced"
         # 顺序读
         script = create_s3_script(fname=testpath, bytesize=104960111)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
         /tmp/autotest_tiering_mul_read.py" % script)
         assert res == "0", "seq seek read failed"
         # 随机读
         script = create_s3_script(fname=testpath, bytesize=1049, blocks=5)
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
         /tmp/autotest_tiering_mul_read.py" % script)
         assert res == "0", "rand seek read failed"
         # 再次上传到s3
@@ -595,7 +595,7 @@ class TestmirrorSeek(YrfsCli):
             check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
             # 顺序读90M
             script = create_s3_script(fname=testpath, bytesize=read_size * 1024 * 1024)
-            _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.pypython3 \
+            _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&python3 \
             /tmp/autotest_tiering_mul_read.py" % script)
             assert res == "0", "seq seek read failed"
             # 获取文件的osd master节点
@@ -845,6 +845,7 @@ class TestmirrorSeek(YrfsCli):
         sleep(2)
         self.sshserver.ssh_exec(self.get_cli("tiering_flush", "998"))
         sleep(60)
+        check_layer(self.testdir + "/autotest.0.0", "S3", "998")
         # 第一次写入100M的区间
         stat, _ = self.sshclient1.ssh_exec(
             "dd if=/dev/zero of=%s/autotest.0.0 bs=1M seek=2 count=100 conv=notrunc" % self.testpath)
@@ -1022,7 +1023,7 @@ class TestmirrorSeek(YrfsCli):
             fnames.append(fname)
         # 并发seek读取文件
         script = create_s3_script(fnames[:20], 20, mode="write")
-        stat, _ = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %spython3 \
+        stat, _ = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %s&&python3 \
         /tmp/autotest_tiering_mul_read.py" % (script, self.mountdir))
         assert stat == 0, "multi seek write failed."
 
@@ -1117,7 +1118,7 @@ class TestmirrorSeek(YrfsCli):
             fname = self.testdir + "/autotest.0." + str(i)
             fnames.append(fname)
         script = create_s3_script(fnames, workers=100, bytesize="5242880")
-        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %spython3 \
+        _, res = self.sshclient1.ssh_exec("echo \"%s\" > /tmp/autotest_tiering_mul_read.py&&cd %s&&python3 \
         /tmp/autotest_tiering_mul_read.py" % (script, self.mountdir))
         assert res == "0", "multi seek read failed."
 

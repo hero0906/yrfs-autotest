@@ -1178,9 +1178,9 @@ class Test_twoClientFunc(YrfsCli):
             sleep(5)
             self.sshserver.ssh_exec(self.get_cli('qos_total_set', self.testdir, '0', '0', '20'))
             sleep(10)
-            self.sshclient1.ssh_exec(r"(time touch %s/autotest_qos1_file{1..80}) > /tmp/autotest_mops.log 2>&1 &"
+            self.sshclient1.ssh_exec(r"(time touch %s/autotest_qos1_file{1..40}) > /tmp/autotest_mops.log 2>&1 &"
                                      % consts.MOUNT_DIR)
-            self.sshclient2.ssh_exec(r"(time touch %s/autotest_qos2_file{1..80}) > /tmp/autotest_mops.log 2>&1"
+            self.sshclient2.ssh_exec(r"(time touch %s/autotest_qos2_file{1..40}) > /tmp/autotest_mops.log 2>&1"
                                      % consts.MOUNT_DIR)
             sleep(60)
             _, res1 = self.sshclient1.ssh_exec(r"cat /tmp/autotest_mops.log|grep real|awk '{print $2}'")

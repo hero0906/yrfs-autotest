@@ -14,6 +14,8 @@ from common.util import sshClient
 from config import consts
 from depend.client import client_mount
 
+yrfs_version = int(consts.YRFS_VERSION[:2])
+
 logger = logging.getLogger(__name__)
 
 #@pytest.mark.skip(msg="skip")
@@ -22,13 +24,13 @@ class TestquotanonEmpty(YrfsCli):
     非空目录quota用例集
     '''
     def setup_class(self):
-        #这些用例只在6.6版本执行
+        #这些用例只在6.6版本以上可以执行
         self.serverip = consts.META1
         self.clientip = consts.CLIENT[0]
         self.quota_error_info = "Disk quota exceeded"
 
-        if consts.YRFS_VERSION[:2] != "66":
-            logger.error("yrfs version not v660 cannt't run.")
+        if yrfs_version < 66:
+            logger.error("yrfs version lower than 660 cannt't run.")
             pytest.skip(msg="only 66* verison need run, skip", allow_module_level=True)
         #quota 命令参数获取
         self.add_quota = self.get_cli(self, "nquota_add")

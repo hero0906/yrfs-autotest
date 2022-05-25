@@ -74,7 +74,7 @@ def create_s3_script(fname, workers=1, bytesize=None, blocks=1, mode="read"):
         chunk = "fo.read({})".format(bytesize)
         rw = "rb"
     else:
-        chunk = "fo.write('hello world!!!!')"
+        chunk = "fo.write(b'hello world!!!!')"
         rw = "wb"
 
     head = "def test_seek(filename):\n" \

@@ -23,3 +23,6 @@ grpcio==1.13.0
 boto==2.49.0
 imageio==2.13.3
 imageio_ffmpeg==0.4.5
+pytest-timeout==2.1.0
+requests==2.26.0
+simplejson==3.17.5
