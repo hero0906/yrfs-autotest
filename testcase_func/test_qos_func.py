@@ -1170,6 +1170,7 @@ class Test_twoClientFunc(YrfsCli):
         assert stat1 == 0 and stat2 == 0, "not found fio log file"
         assert exceed_num == 0, "qos exceed default value"
 
+    @pytest.mark.skip
     def test_twoclient_mops(self):
         '''
         caseID: 3082 两个客户端设置qos mops测试
