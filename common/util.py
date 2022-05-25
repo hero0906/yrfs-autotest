@@ -205,7 +205,7 @@ def ip6_Prefix(ip6_addr):
 
 
 def ping_test(ip):
-    stat, res = subprocess.getstatusoutput("ping -c 1 -w 1 %s" % ip)
+    stat, res = subprocess.getstatusoutput("ping6 -c 1 -w 1 %s" % ip)
     prohib = re.findall(".*Prohibited.*", res)
 
     if stat == 0:
