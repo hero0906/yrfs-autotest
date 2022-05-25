@@ -161,7 +161,7 @@ def report_extract(mail=True):
     # 查找测试报告的内容
     report = "logs/report.html"
     allurelog = "logs/allure-results"
-    hostname = "10.16.2.18"
+    hostname = "192.168.96.254"
     with open(report, "r+") as f:
         lines = f.read()
 
