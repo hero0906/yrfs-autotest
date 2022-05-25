@@ -52,7 +52,7 @@ def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
         if type == "ip6":
             try:
                 if acl_add == True:
-                    sshserver.ssh_exec(yrcli.get_cli("acl_ip_add", subdir, "::", "rw"))
+                    sshserver.ssh_exec(yrcli.get_cli("acl_ip_add", subdir, "::/0", "rw"))
     
                 cmd = yrcli.get_cli('oss_node') + "|grep IPv6 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|" + \
                       "awk -F '<' '{print $2}'|uniq|head -n 3"
