@@ -161,6 +161,7 @@ def report_extract(mail=True):
     # 查找测试报告的内容
     report = "logs/report.html"
     allurelog = "logs/allure-results"
+    hostname = "10.16.2.18"
     with open(report, "r+") as f:
         lines = f.read()
 
@@ -178,11 +179,11 @@ def report_extract(mail=True):
     newreport = "report-%s.html" % time.strftime('%m%d-%H%M%S', time.localtime(time.time()))
     # 备份测试报告
     os.system("cp %s /var/www/html/%s" % (report, newreport))
-    pyreport = "http://10.16.2.18/" + newreport
+    pyreport = "http://" + hostname + "/" + newreport
     # 杀掉之前进程
     os.system("ps axu|grep allure|grep -v grep|awk '{print $2}'|xargs -I {} kill -9 {}")
     os.system("nohup allure -q serve %s -p 9006 &" % allurelog)
-    allurereport = "http://10.16.2.18:9006"
+    allurereport = "http://%s:9006" % hostname
     # 获取软件版本
     yrfs_version = check_version()
     yrfs_version = "".join(yrfs_version.values())
