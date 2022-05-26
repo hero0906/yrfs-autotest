@@ -22,6 +22,7 @@ class Test_dirMount(YrfsCli):
         self.sshserver = sshClient(self.serverip)
         self.add_acl = self.get_cli(self, "acl_ip_add")
         self.del_acl = self.get_cli(self, "acl_ip_del")
+        self.ipv6_cidr = "::/0"
 
     def teardown_class(self):
         self.sshclient.close_connect()
@@ -48,13 +49,13 @@ class Test_dirMount(YrfsCli):
         try:
             client_mount(self.clientip, acl_add=True)
             self.sshclient.ssh_exec('echo "/mnt/yrfs /" > %s' % consts.CLIENT_MOUNT_FILE)
-            self.sshserver.ssh_exec(self.add_acl.format("", "*", "rw"))
+            self.sshserver.ssh_exec(self.add_acl.format("", self.ipv6_cidr, "rw"))
             self.sshclient.ssh_exec("/etc/init.d/yrfs-client stop")
             #重新启动
             stat = self.sshclient.ssh_exec("/etc/init.d/yrfs-client start")
             assert stat != 0, "Client mount success."
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format("", "*"))
+            self.sshserver.ssh_exec(self.del_acl.format("", self.ipv6_cidr))
 
     def test_mount_diff_dir(self):
         """
@@ -64,13 +65,13 @@ class Test_dirMount(YrfsCli):
         try:
             self.sshserver.ssh_exec("mkdir %s/autotest_mount_dir{1..2}" % consts.MOUNT_DIR)
             #设置dir1acl权限
-            stat, _ = self.sshserver.ssh_exec(self.add_acl.format("autotest_mount_dir1", "*", "rw"))
+            stat, _ = self.sshserver.ssh_exec(self.add_acl.format("autotest_mount_dir1", self.ipv6_cidr, "rw"))
             assert stat == 0, "set acl failed."
             #挂载子目录
             mountstat = client_mount(self.clientip, "autotest_mount_dir2")
             assert mountstat != 0, "dir mount failed."
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format("autotest_mount_dir1", "*"))
+            self.sshserver.ssh_exec(self.del_acl.format("autotest_mount_dir1", self.ipv6_cidr))
             self.sshserver.ssh_exec("rm -fr %s/autotest_mount_dir{1..2}" % consts.MOUNT_DIR)
 
     def test_rename_mountpoint(self):
@@ -97,7 +98,7 @@ class Test_dirMount(YrfsCli):
         #设置acl
         try:
             self.sshserver.ssh_exec("mkdir -p " + testpath)
-            self.sshserver.ssh_exec(self.add_acl.format(testdir, "*", mode))
+            self.sshserver.ssh_exec(self.add_acl.format(testdir, self.ipv6_cidr, mode))
             #客户端挂载挂载
             client_mount(self.clientip, testdir)
             #停止客户端服务
@@ -118,7 +119,7 @@ class Test_dirMount(YrfsCli):
                 assert t1 != 0, "touch success."
                 assert t2 != 0, "touch success."
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format(testdir, "*"))
+            self.sshserver.ssh_exec(self.del_acl.format(testdir, self.ipv6_cidr))
             self.sshserver.ssh_exec("rm -fr " + testpath)
 
     @pytest.mark.parametrize("mode1, mode2", (("rw", "rw"),("rw","ro"),("ro","ro")))
@@ -129,8 +130,8 @@ class Test_dirMount(YrfsCli):
         try:
             self.sshserver.ssh_exec("mkdir %s/autotest_mount_dir{1..2}" % consts.MOUNT_DIR)
             #设置权限
-            self.sshserver.ssh_exec(self.add_acl.format("autotest_mount_dir1", "*", mode1))
-            self.sshserver.ssh_exec(self.add_acl.format("autotest_mount_dir2", "*", mode2))
+            self.sshserver.ssh_exec(self.add_acl.format("autotest_mount_dir1", self.ipv6_cidr, mode1))
+            self.sshserver.ssh_exec(self.add_acl.format("autotest_mount_dir2", self.ipv6_cidr, mode2))
             #客户端挂载
             client_mount(self.clientip, "autotest_mount_dir1")
             self.sshclient.ssh_exec("/etc/init.d/yrfs-client stop")
@@ -152,8 +153,8 @@ class Test_dirMount(YrfsCli):
             else:
                 assert t2 != 0, "touch success"
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format("autotest_mount_dir1", "*"))
-            self.sshserver.ssh_exec(self.del_acl.format("autotest_mount_dir2", "*"))
+            self.sshserver.ssh_exec(self.del_acl.format("autotest_mount_dir1", self.ipv6_cidr))
+            self.sshserver.ssh_exec(self.del_acl.format("autotest_mount_dir2", self.ipv6_cidr))
             self.sshserver.ssh_exec("rm -fr %s/autotest_mount_dir{1..2}" % consts.MOUNT_DIR)
 
     def test_two_tier(self):
@@ -167,8 +168,8 @@ class Test_dirMount(YrfsCli):
             #创建测试目录
             self.sshserver.ssh_exec("cd %s&&mkdir -p %s" % (mountdir, subdir))
             #添加acl
-            self.sshserver.ssh_exec(self.add_acl.format(testdir, "*", "rw"))
-            self.sshserver.ssh_exec(self.add_acl.format(subdir, "*", "rw"))
+            self.sshserver.ssh_exec(self.add_acl.format(testdir, self.ipv6_cidr, "rw"))
+            self.sshserver.ssh_exec(self.add_acl.format(subdir, self.ipv6_cidr, "rw"))
             #目录挂载
             client_mount(self.clientip, testdir)
             #添加子目录
@@ -182,8 +183,8 @@ class Test_dirMount(YrfsCli):
             stat, _ = self.sshclient.ssh_exec("touch /mnt/yrfs1/file1")
             assert stat != 0,"Expect touch failed."
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format(testdir, "*"))
-            self.sshserver.ssh_exec(self.del_acl.format(subdir, "*"))
+            self.sshserver.ssh_exec(self.del_acl.format(testdir, self.ipv6_cidr))
+            self.sshserver.ssh_exec(self.del_acl.format(subdir, self.ipv6_cidr))
             self.sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, testdir))
 
     @pytest.mark.parametrize("serveracl", ["rw", "ro"])
@@ -201,7 +202,7 @@ class Test_dirMount(YrfsCli):
             #创建测试目录
             self.sshserver.ssh_exec("cd %s&&mkdir -p %s" % (mountdir, testdir))
             #权限设置
-            self.sshserver.ssh_exec(self.add_acl.format(testdir, "*", serveracl))
+            self.sshserver.ssh_exec(self.add_acl.format(testdir, self.ipv6_cidr, serveracl))
             #客户端挂载
             client_mount(self.clientip, testdir, mode=clientacl)
             #验证权限是否符合预期
@@ -213,7 +214,7 @@ class Test_dirMount(YrfsCli):
             else:
                 assert stat == 0, "Excect touch success."
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format(testdir, "*"))
+            self.sshserver.ssh_exec(self.del_acl.format(testdir, self.ipv6_cidr))
             self.sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, testdir))
 
     def test_mv_dir(self):
@@ -226,7 +227,7 @@ class Test_dirMount(YrfsCli):
         try:
             self.sshserver.ssh_exec("cd %s&&mkdir -p %s" % (mountdir, subdir))
             #权限设置
-            self.sshserver.ssh_exec(self.add_acl.format(subdir, "*", "rw"))
+            self.sshserver.ssh_exec(self.add_acl.format(subdir, self.ipv6_cidr, "rw"))
             #挂载
             client_mount(self.clientip, subdir)
             #删除子目录
@@ -235,5 +236,5 @@ class Test_dirMount(YrfsCli):
             mstat, _ = self.sshclient.ssh_exec("df -h|grep " + mountdir)
             assert mstat != 0, "Excect umount success."
         finally:
-            self.sshserver.ssh_exec(self.del_acl.format(subdir, "*"))
+            self.sshserver.ssh_exec(self.del_acl.format(subdir, self.ipv6_cidr))
             self.sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, testdir))
