@@ -9,10 +9,11 @@ import logging
 from time import sleep
 import random
 import time
-from common.cluster import YrfsCli
+from common.cli import YrfsCli
 from common.util import sshClient
 from config import consts
 from depend.client import client_mount
+from common.cluster import get_entry_info
 
 yrfs_version = int(consts.YRFS_VERSION[:2])
 
@@ -38,6 +39,7 @@ class TestquotanonEmpty(YrfsCli):
         self.update_quota = self.get_cli(self, "quota_update")
         self.delete_quota = self.get_cli(self, "quota_remove")
         self.add_ignore_quota = self.get_cli(self, "noquota_add_ignore")
+        #mdtest测试参数
         self.mdtest = "mdtest -C -d {0} -i 1 -w 1 -I 50000 -z 0 -b 0 -L -F"
 
     def setup(self):
@@ -54,6 +56,44 @@ class TestquotanonEmpty(YrfsCli):
         self.sshserver.ssh_exec("rm -fr " + self.testpath)
         self.sshserver.close_connect()
         self.sshclient.close_connect()
+
+    @pytest.mark.parametrize("layer", ("one", "two", "three"))
+    def test_quota_7976(self, layer):
+        """
+        7976 校验不同层级目录均设quota，删除父目录quota，查看子目录得quota id未更改
+        """
+        subpath = self.testpath + "/A/B/C"
+        dir1 = self.testdir + "/A"
+        dir2 = self.testdir + "/A/B"
+        dir3 = self.testdir + "/A/B/C"
+        self.sshserver.ssh_exec("mkdir -p " + subpath)
+        #设置quota,分别判断不同层级目录的删除情况是否正常
+        self.sshserver.ssh_exec(self.add_ignore_quota.format(self.testdir, "200M", "150"))
+        check_dir = dir1
+        if layer == "two" or layer == "three":
+            self.sshserver.ssh_exec(self.add_ignore_quota.format(dir1, "200M", "150"))
+            check_dir = dir2
+        if layer == "three":
+            self.sshserver.ssh_exec(self.add_ignore_quota.format(dir2, "200M", "150"))
+            check_dir = dir3
+        #获取子目录prjid
+        entry_info = get_entry_info(check_dir)
+        prjid_old = entry_info["ProjectID"]
+        #父目录的projectquota删除
+        sleep(5)
+        self.sshserver.ssh_exec(self.delete_quota.format(self.testdir))
+        check_dir = dir1
+        if layer == "two" or layer == "three":
+            self.sshserver.ssh_exec(self.delete_quota.format(self.testdir))
+            check_dir = dir2
+        if layer == "three":
+            self.sshserver.ssh_exec(self.delete_quota.format(dir1))
+            check_dir = dir3
+        #再次查看子目录的prjid
+        entry_info = get_entry_info(check_dir)
+        prjid_new = entry_info["ProjectID"]
+        #比对两次的pjdid一样
+        assert prjid_old == prjid_new, "prjid was changed"
 
     def test_add_little_file(self):
         '''
