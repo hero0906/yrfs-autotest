@@ -7,6 +7,7 @@
 """
 
 import pytest
+from time import sleep
 from common.cli import YrfsCli
 from common.util import sshClient
 from config import consts
@@ -177,6 +178,7 @@ class Test_dirMount(YrfsCli):
             self.sshclient.ssh_exec('echo "/mnt/yrfs1 /etc/yrfs/yrfs-client.conf %s" >> %s' \
                                     % (subdir, consts.CLIENT_MOUNT_FILE))
             self.sshclient.ssh_exec("/etc/init.d/yrfs-client start")
+            sleep(2)
             #删除子目录
             self.sshclient.ssh_exec("cd %s&&rm -fr dir1" % mountdir)
             #检验目录是否挂载

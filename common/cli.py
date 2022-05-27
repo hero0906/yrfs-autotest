@@ -124,7 +124,7 @@ class YrfsCli:
                 # cliacl del command
                 'cliacl_del': 'yrcli --cliacl --op=delete --ip={}',
                 # acl del command
-                'acl_ip_del': 'yrcli --acl --op=delete --path=/{} --ip={}',
+                'acl_ip_del': 'yrcli --acl --op=delete --path=/{} --ip={} --force',
                 'acl_id_del': 'yrcli --acl --op=delete --path=/{} --id={}',
                 # 文件创建命令
                 'create_file': 'yrcli --create --stripesize={} --stripecount={} --pool=default --unmounted /{} '

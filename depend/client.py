@@ -99,7 +99,7 @@ def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
                                  % (ip, subdir, aclid, type))
             finally:
                 if acl_add == True:
-                    sshserver.ssh_exec(yrcli.get_cli("acl_ip_del", subdir, "::"))
+                    sshserver.ssh_exec(yrcli.get_cli("acl_ip_del", subdir, "::/0"))
         else:
             try:
                 # 是否自动设置acl权限
