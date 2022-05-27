@@ -827,6 +827,7 @@ class Test_QosFunc(YrfsCli):
         assert stat_log == 0, "cann't find fio log file"
         assert exceed_num == 0, "qos exceed the default value"
 
+    @pytest.mark.skip
     def test_qos_posix(self):
         """
         3139 配置了qos的目录下进行posix基本io测试

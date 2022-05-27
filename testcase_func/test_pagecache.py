@@ -90,7 +90,7 @@ class Test_pageCache(YrfsCli):
             assert md1 == md2, "md5sum inconformity"
         finally:
             self.sshserver.ssh_exec("rm -fr " + testfile)
-
+    @pytest.mark.skip
     def test_posix(self):
         """
         2243 （自动化）验证posix语义正确性
