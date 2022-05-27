@@ -57,6 +57,74 @@ class TestquotanonEmpty(YrfsCli):
         self.sshserver.close_connect()
         self.sshclient.close_connect()
 
+    def test_quota_7970(self):
+        """
+        7970 (自动化)校验目录深度16层，设置quota信息，统计准确
+        """
+        testdir = "/1/2/3/4/5/6/7/8/9/10/11/12/13/14/15"
+        #创建目录
+        self.sshserver.ssh_exec("mkdir -p %s%s" % (self.testpath, testdir))
+        self.sshserver.ssh_exec("touch %s%s/file{1..10}" % (self.testpath, testdir))
+        subdir = self.testdir
+        #设置quota
+        for n in range(1, 17):
+            stat, _ = self.sshserver.ssh_exec(self.add_ignore_quota.format(subdir, "200G", "10000"))
+            subdir = subdir + "/" + str(n)
+            assert stat == 0, "add quota failed."
+        sleep(5)
+        #查看quota统计正确
+        subdir = self.testdir
+        for n in range(1, 17):
+            _, res = self.sshserver.ssh_exec(self.quota_verbose.format(subdir))
+            subdir = subdir + "/" + str(n)
+            res = res.split("\n")[2].split()
+            expected_inode = 27 - n
+            actual_inode = int(res[4])
+
+            assert expected_inode == actual_inode, "The number of inodes does not match"
+
+    def test_quota_7971(self):
+        """
+        7971 校验quota广度，设置quota信息，统计准确
+        """
+        #self.sshserver.ssh_exec(self.add_ignore_quota.format(self.testdir, "200G", "10000"))
+        #sleep(5)
+        #创建复杂目录层级
+        self.sshserver.ssh_exec("mkdir -p %s/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir1/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir1/dir1/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir2/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir2/dir1/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir3/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir3/dir1/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir4/dir{1..4}" % self.testpath)
+        self.sshserver.ssh_exec("mkdir -p %s/dir4/dir1/dir{1..4}" % self.testpath)
+        #设置quota
+        _, dirs = self.sshserver.ssh_exec("cd %s&&find %s -type d" % (consts.MOUNT_DIR, self.testdir))
+        dirs_list = dirs.split("\n")
+        for i in dirs_list:
+            self.sshserver.ssh_exec(self.add_ignore_quota.format(i, "200G", "10000"))
+        sleep(5)
+        #写入数据
+        _, paths = self.sshserver.ssh_exec("find %s -type d" % (self.testpath))
+        for i in paths.split("\n"):
+            self.sshserver.ssh_exec("dd if=/dev/zero of=%s/file1 bs=1M count=10" % i)
+        sleep(5)
+        #查看quota统计
+        #
+        for n, m in enumerate(dirs_list):
+            _, res = self.sshserver.ssh_exec(self.quota_verbose.format(m))
+            res = res.split("\n")[2].split()
+            space = res[2]
+            inode = res[4]
+            if n == 0:
+                assert space == "370MiB" and inode == "74"
+            elif n == 1:
+                assert space == "90MiB" and inode == "18"
+            elif n == 36:
+                assert space == "10MiB" and inode == "2"
+        assert n == 36
+
     @pytest.mark.parametrize("layer", ("one", "two", "three"))
     def test_quota_7976(self, layer):
         """
