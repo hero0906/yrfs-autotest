@@ -36,11 +36,12 @@ class Test_dirMount(YrfsCli):
         stat = client_mount(self.clientip, "", acl_add = True)
         assert stat == 0,"client mount failed."
 
+    #@pytest.mark.skip
     def test_no_mount_point(self):
         """
         1994 client端挂载子目录，mounts.conf配置中mount point缺失导致挂载失败
         """
-        stat = client_mount(self.clientip,mountpoint="", acl_add=True)
+        stat = client_mount(self.clientip, mountpoint="", acl_add=True)
         assert stat != 0, "Client mount success."
 
     def test_no_cfg(self):

@@ -13,7 +13,7 @@ from common.cli import YrfsCli
 logger = logging.getLogger(__name__)
 
 
-def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
+def client_mount(ip, subdir="", mountpoint=consts.MOUNT_DIR,
                  aclid=None, type='ip6', param=None, mode=None,
                  acl_add=False):
     """
@@ -86,7 +86,7 @@ def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
                 modstat, _ = sshclient.ssh_exec("lsmod|grep yrfs")
                 # assert stat == 0, "lsmod yrfs failed."
                 # 检查挂载点mount成功
-                findstat, _ = sshclient.ssh_exec('findmnt ' + mountpoint)
+                findstat, _ = sshclient.ssh_exec('mount|grep ' +  mountpoint)
                 # assert stat == 0,"findmnt failed."
                 stat = startstat + modstat + findstat
 
