@@ -1,0 +1,104 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+//grpc client: get client stats
+message ClientStatsPara {
+    //true: hide server ip
+    bool hide_internal_ips = 2;
+    //true: return all client even if opcounter is zero
+    bool return_zero_stats = 3;
+    //client_stats_type = 0, sum of external clients
+    //client_stats_type = 1, sum of internal and external clients
+    //client_stats_type = 2, sum of internal clients
+    uint32 client_stats_type = 4;
+}
+
+/*
+mds opcounter:
+    uint64 sum;
+    uint64 ack;
+    uint64 close;
+    uint64 ent_inf;
+    uint64 node_inf;
+    uint64 fnd_own;
+    uint64 lnk;
+    uint64 mkdir;
+    uint64 create;
+    uint64 rddir;
+    uint64 refr_ent;
+    uint64 mds_inf;
+    uint64 rmdir;
+    uint64 rmlnk;
+    uint64 mv_dir_ins;
+    uint64 mv_file_ins;
+    uint64 open;
+    uint64 ren;
+    uint64 s_ch_drct;
+    uint64 s_attr;
+    uint64 s_dir_pat;
+    uint64 stat;
+    uint64 statfs;
+    uint64 trunc;
+    uint64 symlnk;
+    uint64 unlnk;
+    uint64 look_li;
+    uint64 stat_li;
+    uint64 reval_li;
+    uint64 open_li;
+    uint64 create_li;
+    uint64 mirror_md;
+    uint64 hardlnk;
+    uint64 flck_ap;
+    uint64 flck_en;
+    uint64 flck_rg;
+    uint64 dirparent;
+    uint64 list_xa;
+    uint64 get_xa;
+    uint64 rm_xa;
+    uint64 set_xa
+
+oss opcounter:
+    uint64 sum;
+    uint64 ack;
+    uint64 s_ch_drct;
+    uint64 get_file_size;
+    uint64 s_attr;
+    uint64 statfs;
+    uint64 trunc;
+    uint64 close;
+    uint64 fsync;
+    uint64 open;
+    uint64 iops_rd;
+    uint64 bps_rd;
+    uint64 iops_wr;
+    uint64 bps_wr;
+    uint64 gendbg;
+    uint64 hrtbeat;
+    uint64 rem_node;
+    uint64 node_inf;
+    uint64 stor_info;
+    uint64 unlnk;
+*/
+
+//grpc server: return client stats
+message ClientStatsRet {
+    //attention:
+    //the first message is total size, the ip is fix string "total", the online is true
+    //the client message start with the second message
+    //client ip
+    string ip = 1;
+    //true: client ip is online
+    bool online = 2;
+    //mds or oss opcounter
+    repeated uint64 opcounters = 3;
+}
+message ClientStatsResponse {
+    ResMes result = 1;
+    ClientStatsRet value = 2;
+}
+
+service ClientStats {
+    rpc MdsStats(ClientStatsPara) returns (ClientStatsResponse) {}
+    rpc OssStats(ClientStatsPara) returns (ClientStatsResponse) {}
+}

@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message SlaInfo {
+    // "ps" refers to "per second"
+    uint64 read_times_ps  = 1;
+    uint64 write_times_ps = 2;
+    uint64 total_times_ps = 3;
+    uint64 read_bytes_ps  = 4;
+    uint64 write_bytes_ps = 5;
+    uint64 total_bytes_ps = 6;
+    uint64 mds_ops = 7;
+}
+
+// message for rpc GetSlaData
+message GetSlaRequest {
+    bool use_absolute_path = 1;
+
+    // specify which dir you want to get
+    // if no path is specified, all info are returned
+    string path = 2;
+}
+message GetSlaResponse {
+    ResMes result = 1;
+    string path = 2;
+    string entry_info = 3;
+    repeated SlaInfo sla_info = 4;
+}
+
+service GetSla {
+  rpc GetSla(GetSlaRequest) returns (GetSlaResponse) {}
+}

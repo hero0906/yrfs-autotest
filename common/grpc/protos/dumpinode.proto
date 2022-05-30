@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+//message for dumpinode
+message DumpInodeRequest {
+    // Use path for mounted.(default false)
+    bool use_absolute_path = 1;
+
+    // Specify the directory.(default "")
+    string path = 2;
+
+    enum NodeType {
+        MGR = 0;
+        MDS = 1;
+        OSS = 2;
+    }
+    NodeType type = 3;
+
+    // Specify the entryid.(default "")
+    string entry_id = 4;
+
+    // Specify the owneronly.(default false)
+    bool owner_only = 5;
+
+    // Specify the nodeid.(default "")
+    string node_id = 6;
+}
+message DumpInodeResponse {
+    ResMes result        = 1;
+    string command       = 2;
+    string response_from = 3;
+    string resp_info     = 4;
+}
+
+service DumpInode {
+    rpc DumpInode(DumpInodeRequest) returns (DumpInodeResponse) {}
+}

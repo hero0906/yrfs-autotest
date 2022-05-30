@@ -1,0 +1,68 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+// add projectquota parameter
+message AddProjectQuotaPara {
+    string path = 1;
+    uint64 spacelimit = 2;
+    uint64 inodelimit = 3;
+    bool recursive = 4;
+    bool ignoreexisting = 5;
+    bool pjcontinue = 6;
+}
+message AddProjectQuotaResponse{
+    ResMes result = 1;
+}
+
+// list projectquota parameter
+message ListProjectQuotaPara {
+    string path = 1;
+    bool prefix = 2;
+}
+message ProjectQuotaInfo {
+    string eid = 1;
+    uint64 projectquotaid = 2;
+    uint64 spaceused = 3;
+    uint64 spacelimit = 4;
+    uint64 inodeused = 5;
+    uint64 inodelimit = 6;
+    uint64 dirused = 7;
+    uint64 fileused = 8;
+    string path = 9;
+}
+message ProjectQuotaRet {
+    repeated ProjectQuotaInfo project_quota_info_list = 1;
+}
+message ListProjectQuotaResponse {
+    ResMes result = 1;
+    ProjectQuotaRet value = 2;
+}
+
+// delete projectquota parameter
+message DeleteProjectQuotaPara {
+    string path = 1;
+    string eid = 2;
+    bool force = 3;
+}
+message DeleteProjectQuotaResponse {
+    ResMes result =1;
+}
+
+// update projectquota parameter
+message UpdateProjectQuotaPara {
+    string path = 1;
+    uint64 spacelimit = 2;
+    uint64 inodelimit = 3;
+}
+message UpdateProjectQuotaResponse {
+    ResMes result = 1;
+}
+
+
+service ProjectQuota {
+    rpc AddProjectQuota(AddProjectQuotaPara) returns (AddProjectQuotaResponse) {}
+    rpc ListProjectQuota(ListProjectQuotaPara) returns (ListProjectQuotaResponse) {}
+    rpc DeleteProjectQuota(DeleteProjectQuotaPara) returns (DeleteProjectQuotaResponse) {}
+    rpc UpdateProjectQuota(UpdateProjectQuotaPara) returns (UpdateProjectQuotaResponse) {}
+}

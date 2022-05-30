@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+// message for rpc mkdir
+message MkDirRequest {
+    // default false
+    bool use_absolute_path = 1;
+    string path = 2;
+
+    // choose prefer mds to locate meta data, can be mds id or group id
+    // seperate by using coma
+    string prefer_mds = 3;
+
+    // default 0755
+    string access_mode = 4;
+
+    uint64 uid = 5;
+    uint64 gid = 6;
+
+    // default false;
+    bool not_use_mirror = 7;
+
+    // Specify casefold strategy. Inherit, if not set
+    bool casefold = 8;
+}
+message MkDirResponse {
+    ResMes result = 1;
+}
+
+service MkDir {
+  rpc MkDir(MkDirRequest) returns (MkDirResponse) {}
+}

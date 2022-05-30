@@ -1,0 +1,31 @@
+syntax = "proto3";
+import "nodeoverview.proto";
+import "response.proto";
+package YrcfAgent;
+
+//grpc client: get oss overview
+message OssOverviewPara {
+    bool unused = 1;
+}
+//grpc server: return oss overview
+message OssOverviewRet {
+    uint64 disk_space_total = 1;
+    uint64 disk_space_free = 2;
+    uint64 disk_space_used = 3;
+    uint64 disk_read_sum = 4;
+    uint64 disk_write_sum = 5;
+    repeated ServerNode node_info = 6;
+    repeated TimeValue disk_perf_read = 7;
+    repeated TimeValue disk_perf_average_read = 8;
+    repeated TimeValue disk_perf_write = 9;
+    repeated TimeValue disk_per_average_write = 10;
+}
+message OssOverviewResponse {
+    ResMes result = 1;
+    OssOverviewRet value = 2;
+}
+
+
+service OssOverview {
+    rpc OssOverview(OssOverviewPara) returns (OssOverviewResponse) {}
+}

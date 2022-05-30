@@ -1,0 +1,60 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+// add qos
+message AddQosPara {
+    uint64 rbps = 1;
+    uint64 wbps = 2;
+    uint64 riops = 3;
+    uint64 wiops = 4;
+    uint64 tbps = 5;
+    uint64 tiops = 6;
+    uint64 mops = 7;
+    string path = 8;
+}
+message AddQosResponse {
+    ResMes result = 1;
+}
+
+// list qos
+message ListQosPara {
+    string path = 1;
+    bool prefix = 2;
+}
+message QosInfo {
+    string eid = 1;
+    uint64 rbps = 2;
+    uint64 wbps = 3;
+    uint64 riops = 4;
+    uint64 wiops = 5;
+    uint64 tbps = 6;
+    uint64 tiops = 7;
+    uint64 mops = 8;
+    string path = 9;
+}
+message QosInfoRet {
+    repeated QosInfo qos_info_list = 1;
+}
+message ListQosResponse {
+    ResMes result = 1;
+    QosInfoRet value = 2;
+}
+
+// delete qos
+message DeleteQosPara {
+    string path = 1;
+    bool recursive = 2;
+    bool force = 3;
+}
+message DeleteQosResponse {
+    ResMes result = 1;
+}
+
+
+service Qos {
+    rpc AddQos(AddQosPara) returns (AddQosResponse) {}
+    rpc DeleteQos(DeleteQosPara) returns (DeleteQosResponse) {}
+    rpc ListQos(ListQosPara) returns (ListQosResponse) {}
+}
+

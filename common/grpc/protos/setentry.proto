@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+// message for setentry
+message SetEntryRequest {
+    bool use_mounted_path = 1;
+    string path = 2;
+    string stripe_size = 3;
+    uint32 stripe_count = 4;
+
+    enum Schema {
+        MIRROR = 0;
+        RAID0 = 1;
+        STANDBY = 2;
+    }
+    Schema schema = 5;
+    string pool_id = 6;
+    bool force_set = 7;
+}
+message SetEntryResponse {
+    ResMes result = 1;
+}
+
+service SetEntry {
+    rpc SetEntry(SetEntryRequest) returns (SetEntryResponse);
+}

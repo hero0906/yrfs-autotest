@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message OsdInfo {
+    enum OsdType {
+        OSS = 0;
+        MDS = 1;
+    }
+    OsdType osd_type  = 1;
+    uint32 osd_id     = 2;
+    string node_name  = 3;
+    string node_id    = 4;
+    string group_info = 5;
+    string role_info  = 6;
+    string state_str  = 7;
+    string pool_name  = 8;
+    string space_info = 9;
+    string pool_info  = 10;
+}
+
+// message for rpc list osd
+message ListOsdsRequest {
+    OsdInfo.OsdType osd_type = 1;
+    string pool_id = 2;
+}
+message ListOsdsResponse {
+    ResMes result = 1;
+    repeated OsdInfo osd_info_list = 2;
+}
+
+service ListOsds{
+  rpc ListOsds(ListOsdsRequest) returns (ListOsdsResponse) {}
+}

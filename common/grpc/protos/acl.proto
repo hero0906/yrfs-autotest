@@ -1,0 +1,51 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+// add acl
+message AddAclPara {
+    string path = 1;
+    string ip = 2;
+    string id = 3;
+    enum ModeType {
+        RW = 0;
+        RO = 1;
+    }
+    ModeType mode = 4;
+}
+message AddAclResponse {
+    ResMes result = 1;
+}
+
+// list acl
+message ListAclPara {
+    string path = 1;
+}
+message AclInfo {
+    string path = 1;
+    string response = 2;
+}
+message ListAclRet {
+    repeated AclInfo acl_info_list = 1;
+}
+message ListAclResponse {
+    ResMes result = 1;
+    ListAclRet value = 2;
+}
+
+// delete acl
+message DeleteAclPara {
+    string path = 1;
+    string ip = 2;
+    string id = 3;
+}
+message DeleteAclResponse {
+    ResMes result = 1;
+}
+
+
+service Acl {
+    rpc AddAcl(AddAclPara) returns (AddAclResponse) {}
+    rpc ListAcl(ListAclPara) returns (ListAclResponse) {}
+    rpc DeleteAcl(DeleteAclPara) returns (DeleteAclResponse) {}
+}

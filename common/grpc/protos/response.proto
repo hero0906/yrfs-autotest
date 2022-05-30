@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package YrcfAgent;
+
+/*
+ *  Error code list shown below
+    YRFS_IGNOREME = -1,
+    YRFS_SUCCESS = 0,
+    YRFS_INTERNAL = 1,
+    YRFS_INTERRUPTED = 2,
+    YRFS_COMMUNICATION = 3,
+    YRFS_COMMTIMEDOUT = 4,
+    YRFS_UNKNOWNNODE = 5,
+    YRFS_NOTOWNER = 6,
+    YRFS_EXIST = 7,
+    YRFS_ENOENT = 8,
+    YRFS_INUSE = 9,
+    YRFS_ATTROUTDATED = 10,
+    YRFS_REDIRTYDATA = 11,
+    YRFS_NOTDIR = 12,
+    YRFS_NOTEMPTY = 13,
+    YRFS_NOSPACE = 14,
+    YRFS_UNKNOWNOSD = 15,
+    YRFS_WOULDBLOCK = 16,
+    YRFS_INODENOTINLINED = 17,
+    YRFS_SAVEERROR = 18,
+    YRFS_TOOBIG = 19,           // EFBIG
+    YRFS_INVAL = 20,            // EINVAL
+    YRFS_ADDRFAULT = 21,        // EFAULT
+    YRFS_AGAIN = 22,            // EAGAIN
+    YRFS_SERVERCRASHED = 23,
+    YRFS_PERM = 24,             // EPERM
+    YRFS_DQUOT = 25,            // EDQUOT
+    YRFS_NOMEM = 26,            // ENOMEM
+    YRFS_RANGE = 27,            // ERANGE
+    YRFS_NODATA = 28,           // ENODATA
+    YRFS_NOTSUPP = 29,          // EOPNOTSUPP
+    YRFS_UNKNOWNPOOL = 30,
+    YRFS_EIO = 31,              // EIO
+    YRFS_ROFS = 32,             // EROFS
+    YRFS_GZ = 33,
+    YRFS_S3 = 34,
+    YRFS_MGRNOTMASTER = 35,
+    YRFS_S3EXECBUSY = 36,
+    YRFS_QUANTITYEXCEED = 37,
+    YRFS_FATALERROR = 38,
+    YRFS_SHAREVIOLATION = 39,
+    YRFS_REMOTEFSERROR = 40,
+    YRFS_TOOLONG = 41, // E2BIG
+*/
+
+message ResMes {
+    uint32 error_code = 1;
+    string result     = 2;
+}

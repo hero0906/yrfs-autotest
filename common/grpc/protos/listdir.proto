@@ -1,0 +1,26 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+// list dir info
+message ListDirPara {
+    string path = 1;
+    bool mounted = 2;
+}
+message ListDirInfo {
+    string entry_types = 1;
+    string entry_names = 2;
+}
+message ListDirRet {
+    repeated ListDirInfo listdir_info_list = 1;
+}
+message ListDirResponse {
+    ResMes result = 1;
+    ListDirRet value = 2;
+}
+
+
+service ListDir {
+    rpc ListDir(ListDirPara) returns (ListDirResponse) {}
+}
+

@@ -1,0 +1,32 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+//grpc client: get sla info
+message SlaPara {
+    bool with_root = 1;
+}
+message SlaValue {
+    uint64 total_rb = 1;
+    uint64 total_wb = 2;
+    uint64 total_rs = 3;
+    uint64 total_ws = 4;
+    uint64 rbps = 5;
+    uint64 wbps = 6;
+    uint64 riops = 7;
+    uint64 wiops = 8;
+}
+//grpc server: return sla info
+message SlaRet {
+    string path = 1;
+    string entry_id = 2;
+    repeated SlaValue sla_value = 3;
+}
+message SlaResponse {
+    ResMes result = 1;
+    SlaRet value = 2;
+}
+
+service Sla {
+    rpc SlaInfo(SlaPara) returns (SlaResponse) {}
+}

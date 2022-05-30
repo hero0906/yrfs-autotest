@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+// message for rpc mkfs
+message MkfsRequest {}
+message MkfsResponse {
+    ResMes result = 1;
+}
+
+service Mkfs {
+    rpc Mkfs(MkfsRequest) returns (MkfsResponse) {}
+}

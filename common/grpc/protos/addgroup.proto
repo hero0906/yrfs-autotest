@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message OsdGroupInfo {
+    uint32 group_id = 1;
+
+    message OsdInfo {
+        string role   = 1;
+        string osd_id = 2;
+    }
+    OsdInfo first_osd_info  = 2;
+    OsdInfo second_osd_info = 3;
+}
+
+// message for rpc add group
+message AddGroupRequest {
+    enum OsdType {
+        INVALID_TYPE = 0;
+        MDS          = 1;
+        OSS          = 2;
+    }
+    OsdType osd_type    = 1;
+    bool auto_add_group = 2;
+
+    // specified master node id, must set with parameter <slave>
+    uint32 master_node = 3;
+    uint32 slave_node  = 4;
+
+    // Use the given ID for the new group, if not set,
+    // it will be gerated automatically by default.
+    uint32 group_id = 5;
+
+    // add group forcelyeven there is something unexpected
+    // For example,master and slave node with different disk space.
+    bool force_add = 6;
+
+    // Preview the schema before update to cluster.
+    bool preview = 7;
+    // Use unique mirror group IDs, distinct from storage osd IDs
+    bool unique_group_id = 8;
+}
+message AddGroupResponse {
+    ResMes result                        = 1;
+    repeated OsdGroupInfo osd_group_info = 2;
+}
+
+service AddGroup {
+    rpc AddGroup(AddGroupRequest) returns (AddGroupResponse) {}
+}

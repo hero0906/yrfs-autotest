@@ -1,0 +1,28 @@
+syntax = "proto3";
+import "nodeoverview.proto";
+import "response.proto";
+package YrcfAgent;
+
+//grpc client: get mds overview
+message MdsOverviewPara {
+    bool unused = 1;
+}
+//grpc server: return mds overview
+message MdsOverviewRet {
+    uint64 disk_space_total = 1;
+    uint64 disk_space_free = 2;
+    uint64 disk_space_used = 3;
+    uint64 inode_space_used = 4;
+    repeated ServerNode node_info = 5;
+    repeated TimeValue work_requests = 6;
+    repeated TimeValue queued_requests = 7;
+}
+message MdsOverviewResponse {
+    ResMes result = 1;
+    MdsOverviewRet value = 2;
+}
+
+
+service MdsOverview {
+    rpc MdsOverview(MdsOverviewPara) returns (MdsOverviewResponse) {}
+}

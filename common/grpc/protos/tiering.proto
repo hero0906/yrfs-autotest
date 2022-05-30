@@ -1,0 +1,191 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message TieringBasicInfo {
+    string path      = 1;
+    uint32 bucket_id = 2;
+
+    // used only in s3 mirror mode
+    uint32 backup_bucket_id = 3;
+    uint64 cold_time        = 4;
+    string flush_timer      = 5;
+}
+
+// message for rpc add tiering
+message AddTieringRequest {
+    enum Mode {
+        NORMAL = 0;
+        SEEK   = 1;
+        MIRROR = 2;
+    }
+    Mode mode                           = 1;
+    bool use_absolute_path              = 2;
+    TieringBasicInfo tiering_basic_info = 3;
+    uint32 tiering_id                   = 4;
+    string policy                       = 5;
+    uint32 put_thread_num               = 6;
+    uint32 scan_thread_num              = 7;
+}
+message AddTieringResponse {
+    ResMes result = 1;
+}
+
+// message for rpc delete tiering
+message DeleteTieringRequest {
+    uint32 tiering_id = 1;
+}
+message DeleteTieringResponse {
+    ResMes result = 1;
+}
+
+// message for rpc update tiering
+message UpdateTieringRequest {
+    uint32 tiering_id = 1;
+
+    // set bucket state
+    enum SetBucketStateType {
+        // default this type, and will be ignored
+        INVALID_TYPE  = 0;
+        // will keep up state
+        MANUALLY_UP   = 1;
+
+        // will keep down state
+        MANUALLY_DOWN = 2;
+
+        // state will be set up till ping bucket failed
+        STATE_UP      = 3;
+    }
+    SetBucketStateType state_type = 2;
+    uint64 cold_time              = 3;
+    string flush_timer            = 4;
+    string policy                 = 5;
+    uint64 put_thread_num         = 6;
+    uint64 scan_thread_num        = 7;
+}
+message UpdateTieringResponse {
+    ResMes result = 1;
+}
+
+// message for rpc flush tiering
+message FlushTieringRequest {
+    uint32 tiering_id = 1;
+}
+message FlushTieringResponse {
+    ResMes result = 1;
+}
+
+message TieringInfo {
+    uint32 tiering_id                   = 1;
+    string entry_id                     = 2;
+    string state                        = 3;
+    TieringBasicInfo tiering_basic_info = 4;
+
+    // show this info only when requested
+    string policy = 5;
+}
+
+message TieringLevelInfo {
+    uint32 tiering_id     = 1;
+    string file_size      = 2;
+    uint64 cold_time      = 3;
+    uint64 local_file_num = 4;
+    uint64 s3_file_num    = 5;
+}
+
+// messag for rpc list tiering
+message ListTieringRequest {
+    // default 0, if so, will list all tiering info
+    uint32 tiering_id = 1;
+
+    // if show s3 flush policy, default false
+    bool show_policy = 2;
+
+    // if show s3 flush level, default false
+    bool show_level = 3;
+}
+message ListTieringResponse {
+    ResMes result     = 1;
+    repeated TieringInfo tiering_info = 2;
+
+    // show this info and only this info when requested
+    repeated TieringLevelInfo tiering_level_info = 3;
+}
+
+message TieringStat {
+    uint32 tiering_id    = 1;
+    string original_size = 2;
+    string compress_size = 3;
+    string ratio         = 4;
+    string path          = 5;
+}
+
+// message for rpc stat tiering
+message StatTieringRequest {
+    // default 0, if so, will list all tiering stat
+    uint32 tiering_id = 1;
+}
+message StatTieringResponse {
+    ResMes result = 1;
+    repeated TieringStat tiering_stat = 2;
+}
+
+// message for rpc recover tiering
+message RecoverTieringRequest {
+    uint32 tiering_id = 1;
+    bool full_recover = 2;
+}
+message RecoverTieringResponse {
+    ResMes result = 1;
+}
+
+message RecoverTieringStatInfo {
+    string resync_type  = 1;
+    string resync_state = 2;
+    string start_time   = 3;
+    string end_time     = 4;
+    uint64 total_work   = 5;
+    uint64 error_work   = 6;
+    uint64 success_work = 7;
+}
+
+// message for rpc get recover tiering stat
+message RecoverTieringStatRequest {
+    uint32 tiering_id = 1;
+}
+message RecoverTieringStatResponse {
+    ResMes result                    = 1;
+    RecoverTieringStatInfo stat_info = 2;
+}
+
+// message for rpc set tiering mode
+message SetTieringModeRequest {
+    string path = 1;
+    AddTieringRequest.Mode mode = 2;
+}
+message SetTieringModeResponse {
+    ResMes result = 1;
+}
+
+// message for rpc scan tiering
+message ScanTieringRequest {
+    uint32 tiering_id = 1;
+}
+message ScanTieringResponse {
+    ResMes result = 1;
+}
+
+service Tiering {
+  rpc AddTiering(AddTieringRequest) returns (AddTieringResponse) {}
+  rpc DeleteTiering(DeleteTieringRequest) returns (DeleteTieringResponse) {}
+  rpc UpdateTiering(UpdateTieringRequest) returns (UpdateTieringResponse) {}
+  rpc FlushTiering(FlushTieringRequest) returns (FlushTieringResponse) {}
+  rpc ListTiering(ListTieringRequest) returns (ListTieringResponse) {}
+  rpc StatTiering(StatTieringRequest) returns (StatTieringResponse) {}
+  rpc RecoverTiering(RecoverTieringRequest) returns (RecoverTieringResponse) {}
+  rpc RecoverTieringStat(RecoverTieringStatRequest) returns (RecoverTieringStatResponse) {}
+  rpc ScanTiering(ScanTieringRequest) returns (ScanTieringResponse) {}
+  rpc SetTieringMode(SetTieringModeRequest) returns (SetTieringModeResponse) {}
+}

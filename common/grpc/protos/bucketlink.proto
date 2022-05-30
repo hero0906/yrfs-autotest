@@ -1,0 +1,198 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message ImportConfig {
+    enum Scope {
+        IMPORT_ALL          = 0;
+        IMPORT_NAME_MATCH   = 1;
+        IMPORT_PREFIX_MATCH = 2;
+        IMPORT_NONE         = 3;
+    }
+    Scope scope    = 1;
+    string pattern = 2;
+    string prefix  = 3;
+
+    enum LoadType {
+        LOAD_META      = 0;
+        LOAD_META_DATA = 1;
+    }
+    LoadType load_type = 4;
+}
+
+message ExportConfig {
+    uint32 bucket_id = 1;
+
+    enum Scope {
+        EXPORT_DIRTY              = 0;
+        EXPORT_NONE               = 1;
+        EXPORT_ALL                = 2;
+        EXPORT_NAME_MATCH         = 3;
+        EXPORT_PREFIX_MATCH       = 4;
+        EXPORT_DIRTY_NAME_MATCH   = 5;
+        EXPORT_DIRTY_PREFIX_MATCH = 6;
+    }
+    Scope scope = 2;
+    string pattern = 3;
+    string prefix = 4;
+
+    enum NameRule {
+        USE_ORIGIN = 0;
+        ADD_SUFFIX = 1;
+    }
+    NameRule name_rule = 5;
+    string name_suffix = 6;
+
+    bool will_purge = 7;
+    enum PurgeTiming {
+        AFTER_EXPORT = 0;
+    }
+    PurgeTiming purge_timing = 8;
+}
+
+message SubscribeConfig {
+    enum S3Type {
+        UNSET = 0;
+        ALI   = 1;
+        BAIDU = 2;
+        CEPH  = 3;
+    }
+    S3Type s3_type = 1;
+    string prefix = 2;
+}
+
+message BucketLinkInfo {
+    uint32 link_id = 1;
+    string state = 2;
+    string root_dir = 3;
+    uint32 agent_id = 4;
+    uint32 bucket_id = 5;
+
+    ImportConfig import_config = 6;
+    ExportConfig export_config = 7;
+
+    SubscribeConfig sub_config = 8;
+    string sub_state = 9;
+}
+
+// message for rpc ListBucketLinks
+message ListBucketLinksRequest {}
+message ListBucketLinksResponse {
+    ResMes result = 1;
+    repeated BucketLinkInfo bucket_link_info = 2;
+}
+
+// message for rpc AddBucketlink
+message AddBucketLinkRequest {
+    string link_root_dir = 1;
+    uint32 bucket_id = 2;
+}
+message AddBucketLinkResponse {
+    ResMes result = 1;
+}
+
+// message for rpc DelBucketlink
+message DelBucketLinkRequest {
+    uint32 link_id = 1;
+}
+message DelBucketLinkResponse {
+    ResMes result = 1;
+}
+
+// message for rpc ImportBucketLink
+message ImportBucketLinkRequest {
+    uint32 link_id = 1;
+    ImportConfig import_config = 2;
+}
+message ImportBucketLinkResponse {
+    ResMes result = 1;
+}
+
+// message for rpc ImportBukcketlinkWithBlock
+message ImportBukcketlinkWithBlockRequest {
+    uint32 link_id = 1;
+    ImportConfig import_config = 2;
+}
+message ImportBukcketlinkWithBlockResponse {
+    ResMes result = 1;
+}
+
+// message for rpc ExportBukcetlink
+message ExportBucketLinkRequest {
+    uint32 link_id = 1;
+    ExportConfig export_config = 2;
+}
+message ExportBucketLinkResponse {
+    ResMes result = 1;
+}
+
+// message for rpc ExportBucketlinkWithBlock
+message ExportBucketlinkWithBlockRequest {
+    uint32 link_id = 1;
+    ExportConfig export_config = 2;
+}
+message ExportBucketlinkWithBlockResponse {
+    ResMes result = 1;
+}
+
+
+message ImportProgress {
+    uint64 import_total = 1;
+    uint64 meta_finished = 2;
+    uint64 data_finished = 3;
+}
+
+message ExportProgress {
+    uint64 export_total = 1;
+    uint64 export_finished = 2;
+}
+
+message BucketLinkProgress {
+    uint32 import_bucket_id = 1;
+    ImportProgress import_progress = 2;
+
+    uint32 export_bucketid = 3;
+    ExportProgress export_progress = 4;
+}
+
+// message for StatBucketLink
+message StatBucketLinkRequest {
+    uint32 link_id = 1;
+}
+message StatBucketLinkResponse {
+    ResMes result = 1;
+    uint32 link_id = 2;
+    string state = 3;
+
+    uint32 import_bucket_id = 4;
+    ImportProgress import_progress = 5;
+
+    uint32 export_bucket_id = 6;
+    ExportProgress export_progress = 7;
+}
+
+// message for BucketLinkSubscirbeOps
+message BucketLinkSubscribeOpsRequest {
+    uint32 link_id = 1;
+    enum SubOp {
+        SUBSCRIBE   = 0;
+        UNSUBSCRIBE = 1;
+    }
+    SubOp sub_op = 2;
+    SubscribeConfig sub_config = 3;
+}
+message BucketLinkSubscribeOpsResponse {
+    ResMes result = 1;
+}
+
+service BucketLink {
+  rpc ListBucketLinks(ListBucketLinksRequest) returns (stream ListBucketLinksResponse) {}
+  rpc AddBucketLink(AddBucketLinkRequest) returns (AddBucketLinkResponse) {}
+  rpc DelBucketLink(DelBucketLinkRequest) returns (DelBucketLinkResponse) {}
+  rpc ImportBucketLink(ImportBucketLinkRequest) returns (ImportBucketLinkResponse) {}
+  rpc ExportBucketLink(ExportBucketLinkRequest) returns (ExportBucketLinkResponse) {}
+  rpc StatBucketLink(StatBucketLinkRequest) returns (stream StatBucketLinkResponse) {}
+  rpc BucketLinkSubscribeOps(BucketLinkSubscribeOpsRequest) returns (BucketLinkSubscribeOpsResponse) {}
+}

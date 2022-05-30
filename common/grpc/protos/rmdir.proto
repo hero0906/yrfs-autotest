@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+
+// message for rpc rmdir
+message RmDirRequest {
+    bool use_absolute_path = 1;
+
+    // if target directory is not empty, must set true
+    bool remove_recursively = 2;
+
+    string path = 3;
+}
+message RmDirResponse {
+    ResMes result = 1;
+}
+
+service RmDir {
+  rpc RmDir(RmDirRequest) returns (RmDirResponse) {}
+}

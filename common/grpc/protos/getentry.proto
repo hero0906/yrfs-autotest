@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message MetaInfo {
+    string eid        = 1;
+    string peid       = 2;
+    string redundancy = 3;
+    string group_id   = 4;
+    string node_id    = 5;
+}
+
+message DataInfo {
+    string data_location  = 1;
+    string redundancy     = 2;
+    uint32 tiering_id     = 3;
+    uint32 bucket_link_id = 4;
+    uint32 project_id     = 5;
+    string stripe_size    = 6;
+    string stripe_count   = 7;
+    string placement      = 8;
+}
+
+//message for rpc getentry
+message GetEntryRequest {
+    bool use_absolute_path = 1;
+    string path            = 2;
+}
+message GetEntryResponse {
+    ResMes result      = 1;
+    MetaInfo meta_info = 2;
+    DataInfo data_info = 3;
+}
+
+service GetEntry {
+  rpc GetEntry(GetEntryRequest) returns (GetEntryResponse) {}
+}

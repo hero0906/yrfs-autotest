@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+import "response.proto";
+
+package YrcfAgent;
+
+message BlockLinkInfo {
+    uint32 link_id = 1;
+
+    enum BlockType {
+        BLOCK_IMPORT = 0;
+        BLOCK_EXPORT = 1;
+    }
+    BlockType block_type = 2;
+}
+
+//add block link ID
+message AddBlockLinkRequest {
+    BlockLinkInfo block_link_info = 1;
+}
+message AddBlockLinkResponse {
+    ResMes result = 1;
+}
+
+//delete block link ID
+message DelBlockLinkRequest {
+    BlockLinkInfo block_link_info = 1;
+}
+message DelBlockLinkResponse {
+    ResMes result = 1;
+}
+
+//list block links ID
+message ListBlockLinksRequest {}
+message ListBlockLinksResponse {
+    ResMes result = 1;
+    repeated BlockLinkInfo block_info = 2;
+}
+
+service BlockIO {
+    rpc ListBlockLinks(ListBlockLinksRequest) returns (stream ListBlockLinksResponse);
+    rpc AddBlockLink(AddBlockLinkRequest) returns (AddBlockLinkResponse);
+    rpc DelBlockLink(DelBlockLinkRequest) returns (DelBlockLinkResponse);
+}

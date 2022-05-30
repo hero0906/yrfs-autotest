@@ -1,0 +1,36 @@
+syntax = "proto3";
+import "response.proto";
+package YrcfAgent;
+
+//grpc client: get node list
+message NodeListPara {
+    bool client = 1;
+    bool hide_internal_ips = 2;
+    bool agent = 3;
+}
+//node information
+message NodeInfo {
+    enum NodeType {
+        MDS = 0;
+        OSS = 1;
+        CLIENT = 2;
+        MGR = 3;
+        AGENT = 4;
+    }
+    NodeType type = 1;
+    uint32 node_num_id = 2;
+    string node_name = 3;
+}
+//grpc server: return node list
+message NodeListRet {
+    repeated NodeInfo node_lists = 1;
+}
+message NodeListResponse {
+    ResMes result = 1;
+    NodeListRet value = 2;
+}
+
+
+service NodeList {
+    rpc NodeList(NodeListPara) returns (NodeListResponse) {}
+}
