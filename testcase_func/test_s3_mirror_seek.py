@@ -408,6 +408,7 @@ class TestmirrorSeek(YrfsCli):
         # 校验md5sum值是否一致
         assert mdsum1.split()[0] == mdsum2.split()[0] == mdsum3.split()[0], "md5sum mismatching"
 
+    @pytest.mark.skip
     @pytest.mark.parametrize("cache", ("cache", "none"))
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seek_change_normal(self, cache, lazy):
@@ -433,7 +434,7 @@ class TestmirrorSeek(YrfsCli):
             sleep(3)
             check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
             # 修改mode为normal
-            self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, "0"))
+            self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, "1"))
             # 新建文件02
             self.sshclient1.ssh_exec("dd if=/dev/zero of=%s bs=1M count=500 oflag=direct" % (testpath + "02"))
             _, mdsum2_old = self.sshserver.ssh_exec("md5sum " + testpath + "02")
