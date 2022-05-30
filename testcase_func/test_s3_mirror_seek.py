@@ -408,7 +408,7 @@ class TestmirrorSeek(YrfsCli):
         # 校验md5sum值是否一致
         assert mdsum1.split()[0] == mdsum2.split()[0] == mdsum3.split()[0], "md5sum mismatching"
 
-    @pytest.mark.skip
+    #@pytest.mark.skip
     @pytest.mark.parametrize("cache", ("cache", "none"))
     @pytest.mark.parametrize("lazy", ("true", "false"))
     def test_seek_change_normal(self, cache, lazy):
