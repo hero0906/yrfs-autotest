@@ -160,7 +160,7 @@ class YrfsCli:
             # fsck_meta
             'fsck_meta': 'yrcli --fsck /data/mds{0}/replica --thread=4 --cfg=/etc/yrfs/mds{0}.d/yrfs-mds.conf',
             # create dir
-            'mkdir': 'yrcli --mkdir /{} -u --{}',
+            'mkdir': 'yrcli --mkdir /{} -u',
             # service name
             'oss_service': 'yrfs-oss',
             'mds_service': 'yrfs-mds@mds',
