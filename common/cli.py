@@ -61,7 +61,7 @@ class YrfsCli:
             'qos_list': 'yrcli --getqos',
             'qos_remove': 'yrcli --rmqos --path=/{} --unmounted',
             # create dir
-            'mkdir': 'yrcli --mkdir /{} -u --{}',
+            'mkdir': 'yrcli --mkdir /{} -u',
             # service name
             'oss_service': 'yrfs-storage',
             # s3分层系列参数
