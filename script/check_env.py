@@ -42,6 +42,10 @@ def check_client_tools():
             killall, _ = ssh.ssh_exec("killall --version")
             if killall != 0:
                 print("Client %s not found [killall]" % host)
+            #sync工具检查
+            syncstat, _ = ssh.ssh_exec("sync --version")
+            if syncstat != 0:
+                print("Client %s not found [sync]" % host)
         finally:
             ssh.close_connect()
     print("Check Over-----")
