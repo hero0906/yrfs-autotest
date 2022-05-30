@@ -216,7 +216,7 @@ class TestnoMirror(YrfsCli):
         sleep(10)
         ssh2 = sshClient(server)
         try:
-            make_dir = self.get_cli('mkdir', self.testdir, 'nomirror')
+            make_dir = self.get_cli('mkdir', self.testdir) + " --nomirror"
             ssh2.ssh_exec(make_dir)
             set_quota = self.get_cli('quota_set', self.testdir, self.space, self.inode)
             _, res3 = ssh2.ssh_exec(set_quota)
