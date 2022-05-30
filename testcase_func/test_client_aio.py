@@ -28,12 +28,12 @@ class Test_aiohung(YrfsCli):
         """
         sshclient = sshClient(self.clientip)
         sshserver = sshClient(self.serverip)
-        acl_id = "autotestaio"
+        #acl_id = "autotestaio"
         testfile = consts.MOUNT_DIR + "/autotest_aiohung"
         try:
             # 客户端挂载
-            sshserver.ssh_exec(self.get_cli("acl_id_add", "", acl_id, "rw"))
-            mount_stat = client_mount(self.clientip, aclid=acl_id)
+            #sshserver.ssh_exec(self.get_cli("acl_id_add", "", acl_id, "rw"))
+            mount_stat = client_mount(self.clientip, acl_add=True)
             # 开启aio模式
             set_aio_stat, _ = sshclient.ssh_exec("echo 1 > aio_enable")
 
@@ -46,7 +46,7 @@ class Test_aiohung(YrfsCli):
             assert fio_stat == 0, "fio run failed."
         finally:
             # 环境清理
-            sshserver.ssh_exec(self.get_cli("acl_id_del", "", acl_id))
+            #sshserver.ssh_exec(self.get_cli("acl_id_del", "", acl_id))
             sshserver.ssh_exec("rm -fr " + testfile)
             sshclient.close_connect()
             sshserver.close_connect()
