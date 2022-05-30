@@ -102,6 +102,7 @@ class Test_subdirMountFunc(YrfsCli):
         assert stat1 != 0 and stat2 != 0,"subdir acl inherit parentdir failed"
 
     #@pytest.mark.skipif(self.client_amount < 2,reason="need two client")
+    @pytest.mark.skip
     def test_subdir_segment_acl(self):
         '''
         caseID:2022 同一个子目录不同网段多个细粒度权限,挂载权限以最小细粒度为准
