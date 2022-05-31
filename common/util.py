@@ -344,10 +344,9 @@ def send_email(content, contype="html", users="test"):
             "niuaijie@yanrongyun.com",
             "wangpengfei@yanrongyun.com",
             "lijunhong@yanrongyun.com",
-            "hanlina@yanrongyun.com",
+            "lixiangping@yanrongyun.com",
             "mayunle@yanrongyun.com",
-            "zhanghuan@yanrongyun.com",
-            "xiangzengbao@yanrongyun.com",
+            "liuhuang@yanrongyun.com",
             "caoyi@yanrongyun.com"
         ]
     else:
