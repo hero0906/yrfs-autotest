@@ -148,38 +148,36 @@ def read_config(file_name=None):
 class YamlHandler:
     def __init__(self, filename):
         self.filename = filename
+        self.filepath = os.path.join(TESTDATA_PATH, self.filename + ".yaml")
         self.encoding = "utf-8"
 
     def read_yaml(self):
         try:
-
-            with open(self.filename, encoding=self.encoding) as f:
+            with open(self.filepath, encoding=self.encoding) as f:
                 logger.info("read yaml file: %s." % self.filename)
                 return yaml.load(f.read(), Loader=yaml.FullLoader)
-
         except Exception as e:
             logger.error(traceback.format_exc(e))
 
     def write_yaml(self, data):
         try:
-            with open(self.filename, encoding=self.encoding, mode='w') as f:
-                logger.info("write data: %s, to yaml file: %s." % (data, self.filename))
-                return yaml.dump(data, stream=f, allow_unicode=True)
-        except Exception as e:
-            logger.error(traceback.format_exc(e))
-
-    def update_yaml(self, data):
-        try:
+            mode = "a+"
             origin_data = self.read_yaml()
-            for key in data.keys():
-                if key in origin_data:
-                    origin_data[key] = data[key]
-            self.write_yaml(origin_data)
-            logger.info("update data: %s, from yaml file: %s." % (data, self.filename))
-
+            if origin_data:
+                for key in data.keys():
+                    if key in origin_data:
+                        origin_data[key] = data[key]
+                        mode = "w"
+                if mode == "w":
+                    logger.info("append write yaml")
+                    data = origin_data
+            else:
+                logger.info("overwrite yaml")
+            with open(self.filepath, encoding=self.encoding, mode=mode) as f:
+                logger.info("write data: %s, to yaml file: %s." % (data, self.filename))
+                yaml.dump(data, stream=f, allow_unicode=True)
         except Exception as e:
             logger.error(traceback.format_exc(e))
-
 
 def ip6_Prefix(ip6_addr):
     """
