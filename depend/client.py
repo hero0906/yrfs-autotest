@@ -13,7 +13,7 @@ from common.cli import YrfsCli
 logger = logging.getLogger(__name__)
 
 
-def client_mount(ip, subdir="/", mountpoint=consts.MOUNT_DIR,
+def client_mount(ip, subdir="", mountpoint=consts.MOUNT_DIR,
                  aclid=None, type='ip4', param=None, mode=None,
                  acl_add=False):
     """
