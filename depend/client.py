@@ -99,8 +99,6 @@ def client_mount(ip, subdir="", mountpoint=consts.MOUNT_DIR,
                     mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir + " " + aclid
                     if mode:
                         mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir + " " + aclid + " yrfs " + mode
-                    # sshclient.ssh_exec("echo -e \"{mountpoint} {config} {path} {Id}\" > {mount_file}".format(mountpoint=mountpoint,
-                    #         config=consts.CLIENT_CONFIG, path=subdir, Id=aclid, mount_file=consts.CLIENT_MOUNT_FILE))
                 else:
                     mount_conf = mountpoint + " " + CLIENTCONF + " " + subdir
                     if mode:
@@ -108,23 +106,17 @@ def client_mount(ip, subdir="", mountpoint=consts.MOUNT_DIR,
                 sshclient.ssh_exec("echo \"%s\" > %s" % (mount_conf, MOUNTCONF))
                 # 验证客户端挂载点是否存在
                 startstat, _ = sshclient.ssh_exec("/etc/init.d/yrfs-client start")
-                # assert stat == 0, "client start failed."
                 # 检测模块加载成功
-                modstat, _ = sshclient.ssh_exec("lsmod|grep yrfs")
-                # assert stat == 0, "lsmod yrfs failed."
+                modstat, _ = sshclient.ssh_exec("lsmod | awk '{print $1}'|grep yrfs")
                 # 检查挂载点mount成功
-                findstat, _ = sshclient.ssh_exec('findmnt ' + mountpoint)
-                # assert stat == 0,"findmnt failed."
+                findstat, _ = sshclient.ssh_exec('findmnt {0}|grep {0}'.format(mountpoint))
                 stat = startstat + modstat + findstat
-
                 if stat == 0:
                     logger.info("yrfs client: %s, mount dir: %s, aclid: %s, mount type: %s mount success." \
                                 "" % (ip, subdir, aclid, type))
                 else:
                     logger.error("yrfs client: %s, mount dir: %s, aclid: %s, mount type: %s mount failed." \
                                  "" % (ip, subdir, aclid, type))
-                # 恢复备份文件
-                # sshclient.ssh_exec("mv {0}.bak {0}".format(consts.CLIENT_MOUNT_FILE))
             finally:
                 if acl_add == True:
                     sshserver.ssh_exec(yrcli.get_cli("acl_ip_del", subdir, "*"))
