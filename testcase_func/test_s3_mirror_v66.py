@@ -578,6 +578,7 @@ class TesttieringMirror(YrfsCli):
             self.sshserver.ssh_exec(self.get_cli('tiering_del', parent_id))
             self.sshserver.ssh_exec(self.get_cli('tiering_del', child_id))
 
+    @pytest.mark.skip
     def test_tiering_quota(self, get_data):
         """
         3678 （非空目录quota）部分文件已上传至s3设置后统计正确
