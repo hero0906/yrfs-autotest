@@ -35,20 +35,12 @@ def client_mount(ip, subdir="", mountpoint=consts.MOUNT_DIR,
     sshserver = sshClient(server)
     sshclient = sshClient(client)
     try:
-        # if subdir[0] != "/":
-        #     subdir = "/" + subdir
-
         logger.info("client: %s sub dir: %s mount type: %s mounting." % (ip, subdir, type))
         # 卸载挂载点
         sshclient.ssh_exec("mount|grep yrfs|awk '{print $3}'|xargs -I {} umount {}")
         # assert stat == 0, "umount failed."
         # stop服务
         sshclient.ssh_exec("/etc/init.d/yrfs-client stop")
-        # stat, _ = sshclient.ssh_exec("lsmod|grep yrfs")
-        # assert stat != 0, "rmmod yrfs failed."
-        # 备份现有的client配置文件
-        # logger.info("backup client mount file: %s" % consts.CLIENT_MOUNT_FILE)
-        # sshclient.ssh_exec("mv {0} {0}.bak".format(consts.CLIENT_MOUNT_FILE))
         if type == "ip6":
 
             cmd = yrcli.get_cli('oss_node') + "|grep IPv6 |grep `cat /etc/yrfs/interfaces|head -n1`|awk '{print $1}'|" + \
