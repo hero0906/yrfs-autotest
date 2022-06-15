@@ -532,7 +532,7 @@ class TestquotanonEmpty(YrfsCli):
             list_res = list_res_tmp.split("\n")[2].split()
             spaceused = list_res[2]
             inodeused = list_res[4]
-            recursive = list_res[-4]
+            recursive = list_res[-7]
             assert list_stat == 0, "list quota failed."
             assert spaceused == "100MiB"
             assert inodeused == "22"
@@ -544,7 +544,7 @@ class TestquotanonEmpty(YrfsCli):
             list_res = list_res_tmp.split("\n")[2].split()
             spaceused = list_res[2]
             inodeused = list_res[4]
-            recursive = list_res[-4]
+            recursive = list_res[-7]
             assert list_stat == 0, "list quota failed."
             assert spaceused == "100MiB"
             assert inodeused == "12"
