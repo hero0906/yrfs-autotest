@@ -343,6 +343,7 @@ def send_email(content, contype="html", users="test"):
             "wangpengfei@yanrongyun.com",
             "lijunhong@yanrongyun.com",
             "lixiangping@yanrongyun.com",
+            "jinshan@yanrongyun.com",
             "mayunle@yanrongyun.com",
             "liuhuang@yanrongyun.com",
             "caoyi@yanrongyun.com"
