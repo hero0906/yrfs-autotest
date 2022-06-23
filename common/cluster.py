@@ -448,7 +448,7 @@ def check_cluster_health(check_times=1800, hostip=None):
 
 
 def check_version():
-    filename = "config/cluster_version.yaml"
+    filename = "cluster_version"
     # 获取集群的软件版本
     version_cmd = "yrcli --version"
     serverip = META1
@@ -474,7 +474,7 @@ def check_version():
 
 def cluster_info_collection():
     # 获取集群节点名称与ip的对应关系字典
-    filename = "config/cluster_info.yaml"
+    filename = "cluster_info"
     logger.info("collcetion cluster info save yaml %s." % filename)
     server_info = get_netcard_info()
     # 获取客户端的存储网络ip
