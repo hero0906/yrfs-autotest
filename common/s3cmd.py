@@ -107,7 +107,7 @@ class S3Object():
         try:
             if os.path.isfile(filepath):
                 key_name = filepath.split("/")[-1]
-                conn.upload_file(Filename=filepath,Bucket='testcao001',Key=key_name)
+                conn.upload_file(Filename=filepath,Bucket=self.bucket,Key=key_name)
                 logger.info("upload {} to {} done!".format(filepath, self.bucket))
             elif os.path.isdir(filepath):
                 for o,p,q in os.walk(filepath):
@@ -117,13 +117,16 @@ class S3Object():
                             conn.upload_file(Filename=filename, Bucket='testcao001', Key=f)
                             logger.info("upload {}, key {}, to {} done!".format(filename, f, self.bucket))
             else:
-                logger.error("file type wrong.")
+                logger.error("file %s not found." % filepath)
         except Exception as e:
-            logger.error("upload {} error:".format(filepath, e))
+            logger.error("upload {} error: {}".format(filepath, e))
 
     def bucket_clean(self):
         conn = self._conn_server("s3")
         objects = conn.list_objects(Bucket=self.bucket)
+        if "Contents" not in objects.keys():
+            logger.info("bucket %s not data" % self.bucket)
+            return
         for obj in objects['Contents']:
             obj_key = obj['Key']
             res = conn.delete_objects(Bucket=self.bucket,Delete={'Objects': [{'Key':obj_key}]})
@@ -131,3 +134,4 @@ class S3Object():
                 logger.info("delete objcet %s done." % obj_key)
             else:
                 logger.error("delete object % error, %s." % (obj_key, res))
+

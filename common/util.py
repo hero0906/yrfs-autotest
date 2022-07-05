@@ -66,23 +66,22 @@ class sshClient:
             else:
                 logger.error("Stdout: %s, Sterr: %s, Status: %s." % (result, err_result, status))
             if result:
-                # logger.info("Output: %s, Status: %s." % (result.strip("\n"), status))
                 return status, result
             elif err_result:
-                # if status == 0:
-                #     logger.info("Result: success, output: %s." % (err_result.strip("\n")))
-                #     return (status, err_result)
-                # else:
-                # logger.info("Output: %s, Status: %s." % (err_result.strip("\n"), status))
                 return status, err_result
             else:
-                # if status == 0:
-                #     logger.info("Result: success, output: None")
-                #     return (status, None)
-                # else:
-                #     logger.error("Result: failed, output: None")
                 return status, None
 
+def shell(cmd, timeout=60):
+    ret = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, encoding="utf-8", timeout=timeout)
+    logger.info("run command: %s." % cmd)
+    out = ret.stdout
+    err = ret.stderr
+    if ret.returncode == 0:
+        logger.info("sucess, output:%s." % out)
+    else:
+        logger.error("failed, output:%s." % err)
 
 def ssh_exec(ip, cmd, username=None, password=None):
     """
@@ -126,7 +125,6 @@ def ssh_exec(ip, cmd, username=None, password=None):
     finally:
         ssh.close()
         # logger.info("close ssh session")
-
 
 def read_config(file_name=None):
     """

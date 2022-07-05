@@ -296,7 +296,7 @@ def get_entry_info(filename):
     if stat == 0:
         for i in res.split("\n"):
             if ":" in i:
-                if "," in i:
+                if "," in i and "Placement" not in i:
                     i = i.split(", ")
                     entry_list = entry_list + i
                 else:
@@ -320,10 +320,14 @@ def get_entry_info(filename):
                     nodename = nodeid_tmp[0][0]
                 entry_info["nodename"] = nodename
                 entry_info["nodeid"] = nodeid
+                logger.info(entry_info)
             elif "Stripe Count" in n:
                 count = n[1]
                 count = re.findall(r"([\d.*])", count)
                 entry_info[n[0]] = count[0]
+            elif "Placement" in n:
+                placeid = n[1].strip('[]').split(", ")
+                entry_info[n[0]] = placeid
             else:
                 entry_info[n[0]] = n[1]
         logger.info("Get file: %s entry info %s" % (filename, entry_info))

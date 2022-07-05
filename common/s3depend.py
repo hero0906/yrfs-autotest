@@ -12,7 +12,7 @@ from config import consts
 logger = logging.getLogger(__name__)
 
 
-def check_layer(fname, layer, tierid, mode=None):
+def check_layer(fname, layer, tierid, mode=None, times=30):
     """
     :param fname:  file name
     :param layer:  s3 layer
@@ -24,7 +24,7 @@ def check_layer(fname, layer, tierid, mode=None):
     entry_cmd = yrcli.get_cli("get_entry", fname)
     try:
         sshserver = sshClient(consts.META1)
-        for i in range(30):
+        for i in range(times):
             _, entryinfo = sshserver.ssh_exec(entry_cmd)
             cur_layer = re.findall("Data Location: (.*)\n", entryinfo)
             cur_layer = "".join(cur_layer)
@@ -140,3 +140,16 @@ def check_recover_stat(tier_id):
         return recover_dict
     else:
         logger.error("Tiering %s get recvoer info faild." % tier_id)
+
+def get_bucketlink_stat(link_id):
+    serverip = consts.META1
+    ssh = sshClient(serverip)
+    stat, res = ssh.ssh_exec("yrcli --bucketlink --op=stat --linkid=%s" % link_id)
+    if stat == 0:
+        res =  res.split("\n")
+        state_dict = dict(zip(res[0].split(), res[1].split()))
+        logger.info(state_dict)
+        return state_dict
+    else:
+        logger.error("get bucklink error, %s" % res)
+

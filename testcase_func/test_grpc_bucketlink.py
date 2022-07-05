@@ -34,7 +34,7 @@ class TestGrpcBucket():
 
     def setup_class(self):
         # init the test info
-        self.serverip = consts.META1  # cluster_ip
+        self.serverip = consts.CLUSTER_VIP  # cluster_ip
         self.endpoint = consts.GRPC_ENDPOINT  # agent_grpc port
         self.sshserver = sshClient(self.serverip)
         self.testdir_pre = "auotest_grpc_bucket"
