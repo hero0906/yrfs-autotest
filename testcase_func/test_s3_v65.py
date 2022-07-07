@@ -24,7 +24,7 @@ class TesttieringFunc(YrfsCli):
     '''
     分层测试用例集合
     '''
-    serverip = consts.META1
+    serverip = consts.CLUSTER_VIP
     clientip = consts.CLIENT[0]
 
     def setup_class(self):

@@ -16,9 +16,9 @@ import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from common.cli import YrfsCli
 from common.util import sshClient, sshSftp
-from depend.client import client_mount
+from common.client import client_mount
 from config import consts
-from depend.s3depend import check_layer, create_s3_script
+from common.s3depend import check_layer, create_s3_script
 from common.s3cmd import S3Object
 from common.cluster import get_osd_master, get_entry_info, check_cluster_health
 
@@ -31,7 +31,7 @@ class TestmirrorSeek(YrfsCli):
 
     def setup_class(self):
         self.client1 = consts.CLIENT[0]
-        self.serverip = consts.META1
+        self.serverip = consts.CLUSTER_VIP
         self.testdir = "autotest_seek_" + time.strftime("%m-%d-%H%M%S")
         self.testpath = os.path.join(consts.MOUNT_DIR, self.testdir)
         self.mountdir = consts.MOUNT_DIR
@@ -98,6 +98,7 @@ class TestmirrorSeek(YrfsCli):
 
         self.sshclient1.close_connect()
         self.sshserver.close_connect()
+        check_cluster_health(check_times=1)
 
     def teardown(self):
         self.sshserver.ssh_exec("rm -fr %s/*" % self.testpath)
@@ -129,17 +130,6 @@ class TestmirrorSeek(YrfsCli):
         subdir1 = self.testdir + "/dir1"
         subdir2 = self.testdir + "/dir2"
         layer = ""
-        # 客户端挂载,判断挂载方式填写不同参数
-        # lazy_param = "lazy_close_enable = true\nlazy_read_eof_enable = false\n"
-        # cache_param = "client_cache_type = cache\n"
-        # if cache == "cache" and lazy == "true":
-        #     param = cache_param + lazy_param
-        # elif cache == "cache" and lazy == "false":
-        #     param = cache_param
-        # elif cache == "none" and lazy == "true":
-        #     param = lazy_param
-        # else:
-        #     param = ""
         param = self.__make_param(cache, lazy)
         _mount = client_mount(self.client1, acl_add=True, param=param)
         assert _mount == 0, "Client mount failed."
@@ -433,7 +423,7 @@ class TestmirrorSeek(YrfsCli):
             sleep(3)
             check_layer(fname=testfile, layer="S3", tierid="998", mode="s3seek")
             # 修改mode为normal
-            self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, "0"))
+            self.sshserver.ssh_exec(self.get_cli("tiering_mode", self.testdir, "1"))
             # 新建文件02
             self.sshclient1.ssh_exec("dd if=/dev/zero of=%s bs=1M count=500 oflag=direct" % (testpath + "02"))
             _, mdsum2_old = self.sshserver.ssh_exec("md5sum " + testpath + "02")
@@ -446,7 +436,7 @@ class TestmirrorSeek(YrfsCli):
             assert flush_stat == 0, "s3 flush failed."
             # 检查文件02上传状态为s3normal
             sleep(3)
-            check_layer(fname=testfile + "02", layer="S3", tierid="998", mode="s3normal")
+            check_layer(fname=testfile + "02", layer="S3", tierid="998", mode="s3seek")
             sleep(5)
             # 再次检查存储容量减少
             sleep(3)
@@ -465,7 +455,7 @@ class TestmirrorSeek(YrfsCli):
             _, mdsum2_new = self.sshserver.ssh_exec("md5sum " + testpath + "02")
             sleep(2)
             s3_du3 = s3object.get_keys()
-            assert s3_du1 > s3_du3, "s3 capacity not reduced"
+            assert s3_du1 == s3_du3, "s3 capacity not reduced"
             assert mdsum1_new == mdsum1_old, "md5sum mismatching."
             assert mdsum2_new == mdsum2_old, "md5sum mismatching."
         finally:

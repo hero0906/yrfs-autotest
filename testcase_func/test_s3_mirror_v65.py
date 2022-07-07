@@ -13,9 +13,9 @@ from time import sleep
 from common.cli import YrfsCli
 from config import consts
 from common.util import sshClient
-from depend.client import client_mount
+from common.client import client_mount
 from common.s3cmd import S3Object
-from depend.s3depend import check_layer, check_recover_stat
+from common.s3depend import check_layer, check_recover_stat
 
 yrfs_version = int(consts.YRFS_VERSION[:2])
 
@@ -25,7 +25,7 @@ yrfs_version = int(consts.YRFS_VERSION[:2])
 class Tests3Mirror(YrfsCli):
     def setup_class(self):
         self.clientip = consts.CLIENT[0]
-        self.serverip = consts.META1
+        self.serverip = consts.CLUSTER_VIP
         self.sshclient = sshClient(self.clientip)
         self.sshserver = sshClient(self.serverip)
         # 测试目录定义

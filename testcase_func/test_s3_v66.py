@@ -14,8 +14,8 @@ import re
 from common.cli import YrfsCli
 from common.util import sshClient
 from config import consts
-from depend.client import client_mount
-from depend.s3depend import check_layer
+from common.client import client_mount
+from common.s3depend import check_layer
 from common.cluster import fsck, check_cluster_health
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class TestTiering(YrfsCli):
     def setup_class(self):
         # 变量定义
         self.client1 = consts.CLIENT[0]
-        self.serverip = consts.META1
+        self.serverip = consts.CLUSTER_VIP
         self.sshclient1 = sshClient(self.client1)
         self.sshserver = sshClient(self.serverip)
         # 检验客户端fio测试工具是否存在

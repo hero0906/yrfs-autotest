@@ -10,13 +10,13 @@ import pytest
 from common.cli import YrfsCli
 from common.util import sshClient
 from config import consts
-from depend.client import client_mount
+from common.client import client_mount
 
 
 @pytest.mark.funcTest
 class Test_dirMount(YrfsCli):
     def setup_class(self):
-        self.serverip = consts.META1
+        self.serverip = consts.CLUSTER_VIP
         self.clientip = consts.CLIENT[0]
         self.sshclient = sshClient(self.clientip)
         self.sshserver = sshClient(self.serverip)
@@ -207,11 +207,11 @@ class Test_dirMount(YrfsCli):
             #验证权限是否符合预期
             stat, _ = self.sshclient.ssh_exec("touch %s/file1" % mountdir)
             if serveracl == "ro":
-                assert stat != 0, "Excect touch failed."
+                assert stat != 0, "Except touch failed."
             elif serveracl == "rw" and clientacl == "ro":
-                assert stat != 0, "Excect touch failed."
+                assert stat != 0, "Except touch failed."
             else:
-                assert stat == 0, "Excect touch success."
+                assert stat == 0, "Except touch success."
         finally:
             self.sshserver.ssh_exec(self.del_acl.format(testdir, "*"))
             self.sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, testdir))
@@ -233,7 +233,7 @@ class Test_dirMount(YrfsCli):
             self.sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, subdir))
             #挂载点验证
             mstat, _ = self.sshclient.ssh_exec("df -h|grep " + mountdir)
-            assert mstat != 0, "Excect umount success."
+            assert mstat != 0, "Except umount success."
         finally:
             self.sshserver.ssh_exec(self.del_acl.format(subdir, "*"))
             self.sshserver.ssh_exec("cd %s&&rm -fr %s" % (mountdir, testdir))
