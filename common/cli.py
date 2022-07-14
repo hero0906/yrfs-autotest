@@ -172,8 +172,8 @@ class YrfsCli:
             'get_s3': 'yrcli --s3',
             's3_gzip': 'yrcli --setconfig --key=s3_compress_gzip --value={}',
             # s3 tiering
-            'bucket_add': 'yrcli --bucket --op=add --hostname={} --protocol={} --bucketname={} \
-            --uri_style={} --region={} --access_key={} --secret_access_key={} --token={} --type={} --bucketid={}',
+            'bucket_add': 'yrcli --bucket --op=add --hostname={} --protocol={} --bucketname={} '
+            '--uri_style={} --region={} --access_key={} --secret_access_key={} --token={} --type={} --bucketid={}',
             "bucket_list": 'yrcli --bucket --op=list',
             "bucket_del": 'yrcli --bucket --op=delete --bucketid={}',
             "tiering_add": "yrcli --tiering --op=add --path=/{} --bucketid={} --coldtime={} --timer={} --id={} -u",
@@ -208,5 +208,4 @@ class YrfsCli:
             return argument
 
         except Exception as e:
-
             logger.error("Command not found or args fail", traceback.format_exc(e))
